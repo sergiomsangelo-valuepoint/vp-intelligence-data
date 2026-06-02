@@ -290,9 +290,9 @@ def fetch_bpstat(serie_id: str, n_periods: int = 60) -> list[dict]:
 
 
 def fetch_euribor_ecb() -> list[dict]:
-    """Euribor 12M via BCE Statistical Data Warehouse."""
-    url = "https://data-api.ecb.europa.eu/service/data/FM/M.U2.EUR.RT0.MM.EURIBOR1YD_.HSTA"
-    params = {"startPeriod": "2019-01", "format": "csvdata"}
+    """Euribor 12M via FRED API (Federal Reserve Bank of St. Louis)."""
+    url = "https://fred.stlouisfed.org/graph/fredgraph.csv"
+    params = {"id": "EUR12MD156N", "vintage_date": ""}
     
     try:
         resp = requests.get(url, params=params, timeout=30,
@@ -301,21 +301,20 @@ def fetch_euribor_ecb() -> list[dict]:
         
         resultados = []
         for linha in resp.text.strip().split("\n")[1:]:
-            partes = linha.split(",")
-            if len(partes) >= 2:
-                periodo = partes[0].strip().strip('"')
-                valor_str = partes[-1].strip().strip('"')
+            partes = linha.strip().split(",")
+            if len(partes) == 2:
+                periodo = partes[0][:7]
                 try:
-                    valor = float(valor_str)
+                    valor = float(partes[1])
                     resultados.append({"periodo": periodo, "valor": valor})
                 except ValueError:
                     continue
         
         resultados.sort(key=lambda x: x["periodo"])
-        return resultados
+        return [r for r in resultados if r["periodo"] >= "2019-01"]
         
     except Exception as e:
-        print(f"  ⚠ Erro Euribor BCE: {e}")
+        print(f"  ⚠ Erro Euribor FRED: {e}")
         return []
 
 
