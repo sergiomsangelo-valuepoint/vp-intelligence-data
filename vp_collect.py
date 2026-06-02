@@ -574,9 +574,27 @@ def escrever_google_sheets(todos_dados: dict, sheet_id: str, credentials_file: s
                 timestamp
             ])
         
-        ws_ind.clear()
-        ws_ind.update(linhas_ind, value_input_option="USER_ENTERED")
-        print(f"  ✓ VP_Indicadores → {len(linhas_ind)-1} observações escritas")
+        if len(linhas_ind) > 1:  # Só escreve se tiver dados (além do cabeçalho)
+            # Ler linhas manuais existentes (fontes não-INE) para preservar
+            try:
+                existentes = ws_ind.get_all_records()
+                manuais = [r for r in existentes if r.get("Fonte") not in ("INE", "BdP/BPStat")]
+                if manuais:
+                    for m in manuais:
+                        linhas_ind.append([
+                            m.get("Indicador",""), m.get("Descrição",""),
+                            m.get("Dimensão",""), m.get("Período",""),
+                            m.get("Valor",""), m.get("Unidade",""),
+                            m.get("Fonte",""), m.get("Notas",""),
+                            m.get("Actualizado_em","")
+                        ])
+            except Exception:
+                pass
+            ws_ind.clear()
+            ws_ind.update(linhas_ind, value_input_option="USER_ENTERED")
+            print(f"  ✓ VP_Indicadores → {len(linhas_ind)-1} observações escritas")
+        else:
+            print(f"  ⚠ VP_Indicadores → sem dados novos, Sheet preservada")
         
         # ── Separador 2: IPA ──────────────────────────────────────────────────
         try:
