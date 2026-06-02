@@ -291,49 +291,33 @@ def fetch_bpstat(serie_id: str, n_periods: int = 60) -> list[dict]:
 
 def fetch_euribor_ecb() -> list[dict]:
     """
-    Euribor 12M via BCE Statistical Data Warehouse (SDMX REST API).
-    Público, sem autenticação.
-    URL: https://data-api.ecb.europa.eu/service/data/FM/M.U2.EUR.RT0.MM.EURIBOR1YD_.HSTA
+    Euribor 12M via euribor-rates.eu API JSON.
     """
-    url = ECB_EURIBOR_12M["url"]
-    params = {
-        "format": "jsondata",
-        "startPeriod": "2019-01",
-        "detail": "dataonly"
-    }
+    url = "https://euribor-rates.eu/api/v1/euribors"
+    params = {"rate": "12m", "format": "json"}
     
     try:
         resp = requests.get(url, params=params, timeout=30,
-                           headers={"Accept": "application/json"})
+                           headers={"User-Agent": "VP-RealEstateIntelligence/1.0"})
         resp.raise_for_status()
         data = resp.json()
         
-        # Estrutura SDMX JSON: dataSets[0].series → observations
-        series_data = (data.get("dataSets", [{}])[0]
-                           .get("series", {})
-                           .get("0:0:0:0:0:0:0", {})
-                           .get("observations", {}))
-        
-        # Datas no structure
-        dates = (data.get("structure", {})
-                     .get("dimensions", {})
-                     .get("observation", [{}])[0]
-                     .get("values", []))
-        
         resultados = []
-        for i, vals in series_data.items():
+        for obs in data:
+            periodo = obs.get("date", "")[:7]  # YYYY-MM
+            valor = obs.get("rate")
             try:
-                periodo = dates[int(i)].get("id", "")
-                valor = float(vals[0]) if vals[0] is not None else None
+                valor = float(valor) if valor is not None else None
+            except (ValueError, TypeError):
+                valor = None
+            if periodo:
                 resultados.append({"periodo": periodo, "valor": valor})
-            except (IndexError, ValueError, TypeError):
-                continue
         
         resultados.sort(key=lambda x: x["periodo"])
         return resultados
         
     except Exception as e:
-        print(f"  ⚠ Erro BCE Euribor: {e}")
+        print(f"  ⚠ Erro Euribor: {e}")
         return []
 
 
