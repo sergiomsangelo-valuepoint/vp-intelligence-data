@@ -98,7 +98,7 @@ INE_INDICATORS = {
         "notas": "Estatísticas das Obras Licenciadas · INE"
     },
     "fogos_concluidos": {
-        "varcd": "0001460",
+        "varcd": "0012778",
         "geo": "PT",
         "desc": "Fogos concluídos (N.º)",
         "unidade": "N.º",
@@ -125,7 +125,7 @@ INE_INDICATORS = {
         "notas": "Estatísticas de Preços da Habitação · INE"
     },
     "custo_construcao": {
-        "varcd": "0000638",
+        "varcd": "0011751",
         "geo": "PT",
         "desc": "Custo de construção — variação homóloga ICCHN (%)",
         "unidade": "%",
