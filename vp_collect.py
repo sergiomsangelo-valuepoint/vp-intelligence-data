@@ -115,14 +115,15 @@ INE_INDICATORS = {
         "dimensao": "Mercado",
         "notas": "Índice de Preços da Habitação · INE"
     },
-    "transaccoes_total": {
+   "transaccoes_total": {
         "varcd": "0012785",
         "geo": "PT",
         "desc": "Transacções de alojamentos familiares (N.º)",
         "unidade": "N.º fogos",
         "cadencia": "Trimestral",
         "dimensao": "Mercado",
-        "notas": "Estatísticas de Preços da Habitação · INE"
+        "dims_extra": {"Dim2": "T", "Dim3": "T", "Dim4": "S1"},
+        "notas": "Estatísticas de Preços da Habitação · INE · Total · Todos compradores"
     },
     "custo_construcao": {
         "varcd": "0011751",
@@ -223,17 +224,31 @@ def fetch_ine(varcd: str, geo: str = "PT", n_periods: int = 20) -> list[dict]:
                 if isinstance(observacoes, list):
                     for obs in observacoes:
                         if obs.get("geocod") == geo:
-                            valor_str = obs.get("valor", "")
-                            try:
-                                valor = float(valor_str.replace(",", "."))
-                            except (ValueError, AttributeError):
-                                valor = None
-                            resultados.append({
-                                "periodo": periodo,
-                                "valor": valor,
-                                "geocod": geo
-                            })
-                            break
+                            # Para indicadores multi-dimensão, priorizar Total/Total/Total
+                            dim3 = obs.get("dim_3_t", "")
+                            dim4 = obs.get("dim_4_t", "")
+                            dim5 = obs.get("dim_5_t", "")
+                            sinal = obs.get("sinal_conv", "")
+                            
+                            # Ignorar linhas sem valor
+                            if sinal == "x":
+                                continue
+                            
+                            # Preferir Total em todas as dimensões
+                            is_total = all(d in ("Total", "", "T") or d not in ("Novos", "Existentes", "Famílias", "União Europeia", "Território nacional", "Restantes países", "Restantes setores institucionais") for d in [dim3, dim4, dim5])
+                            
+                            valor_str = obs.get("valor", obs.get("ind_string", ""))
+                            if valor_str and valor_str != "x":
+                                try:
+                                    valor = float(str(valor_str).replace(" ", "").replace(",", "."))
+                                    resultados.append({
+                                        "periodo": periodo,
+                                        "valor": valor,
+                                        "geocod": geo
+                                    })
+                                    break
+                                except (ValueError, AttributeError):
+                                    continue
         
         # Ordenar por período e devolver os mais recentes
         resultados.sort(key=lambda x: x["periodo"])
