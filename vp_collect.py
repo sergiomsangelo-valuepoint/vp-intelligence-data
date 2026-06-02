@@ -107,7 +107,7 @@ INE_INDICATORS = {
         "notas": "Estatísticas das Obras Concluídas · INE"
     },
     "iph_variacao": {
-        "varcd": "0009742",
+        "varcd": "0014341",
         "geo": "PT",
         "desc": "IPH — variação anual (%)",
         "unidade": "%",
@@ -116,7 +116,7 @@ INE_INDICATORS = {
         "notas": "Índice de Preços da Habitação · INE"
     },
     "transaccoes_total": {
-        "varcd": "0008096",
+        "varcd": "0012785",
         "geo": "PT",
         "desc": "Transacções de alojamentos familiares (N.º)",
         "unidade": "N.º fogos",
@@ -134,7 +134,7 @@ INE_INDICATORS = {
         "notas": "Índice de Custo de Construção de Habitação Nova · INE"
     },
     "ipc_hicp": {
-        "varcd": "0007735",
+        "varcd": "0014664",
         "geo": "PT",
         "desc": "Inflação HICP — variação anual (%)",
         "unidade": "%",
@@ -143,7 +143,7 @@ INE_INDICATORS = {
         "notas": "Índice Harmonizado de Preços no Consumidor · INE / Eurostat"
     },
     "pib_real": {
-        "varcd": "0007637",
+        "varcd": "0013431",
         "geo": "PT",
         "desc": "PIB real — variação homóloga (%)",
         "unidade": "%",
