@@ -3,17 +3,6 @@ VP · Real Estate Intelligence — Script de Recolha Automática de Dados
 ======================================================================
 Fontes: INE API JSON · BPStat API (Banco de Portugal) · BCE SDMX
 Destino: Google Sheets (base de dados leve, lida pelo site)
-
-Execução: python vp_collect.py
-Cadência recomendada: trimestral (ou via GitHub Actions - ver README)
-
-Pré-requisitos:
-  pip install requests gspread google-auth pandas openpyxl
-
-Autenticação Google Sheets:
-  1. Google Cloud Console → criar projecto → activar Sheets API + Drive API
-  2. Criar Service Account → descarregar credentials.json para esta pasta
-  3. Partilhar a Google Sheet com o email da Service Account
 """
 
 import requests
@@ -26,18 +15,11 @@ import os
 
 # ─── Configuração ────────────────────────────────────────────────────────────
 
-# ID da Google Sheet (retirar do URL: docs.google.com/spreadsheets/d/[ID]/edit)
 SHEET_ID = "1vfyiRKaH9sR588chc9iuPeoW9Kn798VxtKI0anef1xE"
-
-# Caminho para o ficheiro de credenciais da Service Account
 CREDENTIALS_FILE = "credentials.json"
-
-# Activar escrita na Google Sheet (False = apenas mostra os dados no terminal)
 WRITE_TO_SHEET = True
 
 # ─── Mapeamento de Indicadores INE ───────────────────────────────────────────
-# Formato: { "nome_interno": { "varcd": "código", "geo": "PT", "desc": "..." } }
-# varcd = indOcorrCod dos URLs do Portal INE
 
 INE_INDICATORS = {
     "preco_mediano": {
@@ -47,7 +29,6 @@ INE_INDICATORS = {
         "unidade": "€/m²",
         "cadencia": "Trimestral",
         "dimensao": "Procura",
-        "dim_categoria": "Total",  # Total / Novos / Existentes
         "notas": "Estatísticas de Preços da Habitação · INE · Metodologia 2022"
     },
     "preco_mediano_novos": {
@@ -57,7 +38,6 @@ INE_INDICATORS = {
         "unidade": "€/m²",
         "cadencia": "Trimestral",
         "dimensao": "Procura",
-        "dim_categoria": "Novos",
         "notas": "Estatísticas de Preços da Habitação · INE · Metodologia 2022"
     },
     "preco_mediano_existentes": {
@@ -67,7 +47,6 @@ INE_INDICATORS = {
         "unidade": "€/m²",
         "cadencia": "Trimestral",
         "dimensao": "Procura",
-        "dim_categoria": "Existentes",
         "notas": "Estatísticas de Preços da Habitação · INE · Metodologia 2022"
     },
     "renda_mediana": {
@@ -115,14 +94,13 @@ INE_INDICATORS = {
         "dimensao": "Mercado",
         "notas": "Índice de Preços da Habitação · INE"
     },
-   "transaccoes_total": {
+    "transaccoes_total": {
         "varcd": "0012785",
         "geo": "PT",
         "desc": "Transacções de alojamentos familiares (N.º)",
         "unidade": "N.º fogos",
         "cadencia": "Trimestral",
         "dimensao": "Mercado",
-        "dims_extra": {"Dim2": "T", "Dim3": "T", "Dim4": "S1"},
         "notas": "Estatísticas de Preços da Habitação · INE · Total · Todos compradores"
     },
     "custo_construcao": {
@@ -152,7 +130,7 @@ INE_INDICATORS = {
         "dimensao": "Macro",
         "notas": "Contas Nacionais Trimestrais · INE / BdP"
     },
-  "divisoes_por_fogo": {
+    "divisoes_por_fogo": {
         "varcd": "0000079",
         "geo": "PT",
         "desc": "Divisões por fogo concluído (N.º)",
@@ -172,72 +150,24 @@ INE_INDICATORS = {
     },
 }
 
-# ─── Mapeamento de Séries BPStat (Banco de Portugal) ─────────────────────────
-# IDs numéricos das séries em bpstat.bportugal.pt/serie/{id}
-
-BPSTAT_SERIES = {
-    "credito_habitacao": {
-        "serie_id": "17175873",
-        "desc": "Novo crédito habitação — novas operações (M€)",
-        "unidade": "M€",
-        "cadencia": "Mensal",
-        "dimensao": "Procura",
-        "notas": "Banco de Portugal · BPStat · Crédito habitação · Novas operações"
-    },
-    "taxa_esforco": {
-        "serie_id": "16895098",
-        "desc": "Taxa de esforço — crédito habitação (%)",
-        "unidade": "%",
-        "cadencia": "Trimestral",
-        "dimensao": "Procura",
-        "notas": "Banco de Portugal · BPStat · Estabilidade Financeira"
-    },
-}
-
-# ─── Euribor (BCE SDMX API) ──────────────────────────────────────────────────
-# Euribor 12M: BCE → Statistical Data Warehouse → FM/M.U2.EUR.RT0.MM.EURIBOR1YD_.HSTA
-
-ECB_EURIBOR_12M = {
-    "url": "https://data-api.ecb.europa.eu/service/data/FM/M.U2.EUR.RT0.MM.EURIBOR1YD_.HSTA",
-    "desc": "Euribor 12 meses (%)",
-    "unidade": "%",
-    "cadencia": "Mensal",
-    "dimensao": "Procura",
-    "notas": "Banco Central Europeu · Statistical Data Warehouse · SDMX REST API"
-}
-
 
 # ─── Funções de recolha ───────────────────────────────────────────────────────
 
-def fetch_ine(varcd: str, geo: str = "PT", n_periods: int = 20) -> list[dict]:
-    """
-    Chama a API JSON do INE e devolve lista de {periodo, valor}.
-    Endpoint: https://www.ine.pt/ine/json_indicador/pindica.jsp
-    Parâmetros:
-      op=2   → série temporal completa
-      varcd  → código do indicador (indOcorrCod)
-      lang   → PT
-    """
+def fetch_ine(varcd: str, geo: str = "PT", n_periods: int = 20) -> list:
     url = "https://www.ine.pt/ine/json_indicador/pindica.jsp"
-    params = {
-        "op": "2",
-        "varcd": varcd,
-        "lang": "PT"
-    }
-    
+    params = {"op": "2", "varcd": varcd, "lang": "PT"}
+
     try:
         resp = requests.get(url, params=params, timeout=30,
-                           headers={"User-Agent": "VP-RealEstateIntelligence/1.0"})
+                            headers={"User-Agent": "VP-RealEstateIntelligence/1.0"})
         resp.raise_for_status()
         data = resp.json()
-        
-        # Estrutura INE: lista de objectos com "Dados" → lista de {geocod, dim_*, valor}
+
         resultados = []
         if isinstance(data, list) and len(data) > 0:
             item = data[0]
             dados = item.get("Dados", {})
-            
-            # Dados é dict onde chaves são períodos (ex: "2024T4", "2026M03")
+
             for periodo, observacoes in dados.items():
                 if isinstance(observacoes, list):
                     melhor_obs = None
@@ -264,11 +194,11 @@ def fetch_ine(varcd: str, geo: str = "PT", n_periods: int = 20) -> list[dict]:
                             valor = float(str(valor_str).replace(" ", "").replace(",", "."))
                             resultados.append({"periodo": periodo, "valor": valor, "geocod": geo})
                         except (ValueError, AttributeError):
-                            pass        
-        # Ordenar por período e devolver os mais recentes
+                            pass
+
         resultados.sort(key=lambda x: x["periodo"])
         return resultados[-n_periods:] if n_periods else resultados
-        
+
     except requests.RequestException as e:
         print(f"  ⚠ Erro INE (varcd={varcd}): {e}")
         return []
@@ -277,127 +207,37 @@ def fetch_ine(varcd: str, geo: str = "PT", n_periods: int = 20) -> list[dict]:
         return []
 
 
-def fetch_bpstat(serie_id: str, n_periods: int = 60) -> list[dict]:
-    """
-    Chama a API BPStat do Banco de Portugal.
-    Endpoint: https://bpstat.bportugal.pt/data/v1/series/{id}/
-    Documentação: https://bpstat.bportugal.pt/data/docs
-    
-    Nota: requer registo gratuito em bpstat.bportugal.pt para chave API.
-    Sem chave, o endpoint devolve dados públicos com rate limiting.
-    """
-    url = f"https://bpstat.bportugal.pt/data/v1/series/{serie_id}/"
-    
-    # Se tiveres chave API, adiciona aqui:
-    # headers = {"Authorization": "Bearer SEU_TOKEN_AQUI"}
-    headers = {"Accept": "application/json",
-               "User-Agent": "VP-RealEstateIntelligence/1.0"}
-    
-    try:
-        resp = requests.get(url, headers=headers, timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
-        
-        resultados = []
-        obs_list = data.get("observations", data.get("data", []))
-        
-        for obs in obs_list:
-            periodo = obs.get("date", obs.get("period", ""))
-            valor_raw = obs.get("value", obs.get("val", None))
-            try:
-                valor = float(valor_raw) if valor_raw is not None else None
-            except (ValueError, TypeError):
-                valor = None
-            if periodo:
-                resultados.append({"periodo": periodo, "valor": valor})
-        
-        resultados.sort(key=lambda x: x["periodo"])
-        return resultados[-n_periods:] if n_periods else resultados
-        
-    except requests.RequestException as e:
-        print(f"  ⚠ Erro BPStat (serie={serie_id}): {e}")
-        return []
-
-
-def fetch_euribor_ecb() -> list[dict]:
-    """Euribor 12M via FRED API (Federal Reserve Bank of St. Louis)."""
-    url = "https://fred.stlouisfed.org/graph/fredgraph.csv"
-    params = {"id": "EUR12MD156N", "vintage_date": ""}
-    
-    try:
-        resp = requests.get(url, params=params, timeout=30,
-                           headers={"User-Agent": "VP-RealEstateIntelligence/1.0"})
-        resp.raise_for_status()
-        
-        resultados = []
-        for linha in resp.text.strip().split("\n")[1:]:
-            partes = linha.strip().split(",")
-            if len(partes) == 2:
-                periodo = partes[0][:7]
-                try:
-                    valor = float(partes[1])
-                    resultados.append({"periodo": periodo, "valor": valor})
-                except ValueError:
-                    continue
-        
-        resultados.sort(key=lambda x: x["periodo"])
-        return [r for r in resultados if r["periodo"] >= "2019-01"]
-        
-    except Exception as e:
-        print(f"  ⚠ Erro Euribor FRED: {e}")
-        return []
-
-
 # ─── Cálculo IPA ─────────────────────────────────────────────────────────────
 
 def calcular_ipa(dados: dict) -> dict:
-    """
-    Calcula os 3 rácios do IPA — Índice de Pressão de Acessibilidade.
-    
-    Rácio A: Prestação mensal estimada ÷ Rendimento líquido mensal
-    Rácio B: Renda mediana mensal ÷ Rendimento líquido mensal (usando área típica)
-    Rácio C: Divergência acumulada preços vs rendimentos (base 2019)
-    
-    Parâmetros de calibração (alinhados com 03·IPA do ficheiro):
-      - Área típica: 88.65 m² (INE — divisões × superfície/divisão)
-      - LTV: 80% (BdP)
-      - Prazo: 30 anos
-      - Spread bancário médio: 1.5%
-    """
-    # Parâmetros de calibração
     divisoes = dados.get("divisoes_por_fogo_ultimo") or 4.2
     superficie = dados.get("superficie_habitavel_ultimo") or 21.1
     AREA_TIPICA = divisoes * superficie
     print(f"  Área típica calculada: {divisoes} div × {superficie} m²/div = {AREA_TIPICA:.1f} m²")
+
     LTV = 0.80
     PRAZO_ANOS = 30
-    SPREAD = 0.015            # 1.5%
-    LIMIAR_BDP = 0.35         # 35%
-    LIMIAR_VP = 0.45          # 45%
-    
+    SPREAD = 0.015
+    LIMIAR_BDP = 0.35
+    LIMIAR_VP = 0.45
+
     resultado = {}
-    
-    # Extrair últimos valores disponíveis
+
     preco = dados.get("preco_mediano_ultimo")
     renda_m2 = dados.get("renda_mediana_ultimo")
     rendimento = dados.get("rendimento_liquido_ultimo")
     euribor = dados.get("euribor_12m_ultimo")
-    
-    # Valores base 2019 para Rácio C
     preco_2019 = dados.get("preco_mediano_2019")
     rendimento_2019 = dados.get("rendimento_liquido_2019")
-    
-    # Rácio A — Pressão de Compra
+
     if all(v is not None for v in [preco, euribor, rendimento]):
         taxa_mensal = (euribor / 100 + SPREAD) / 12
         n_meses = PRAZO_ANOS * 12
         capital = preco * AREA_TIPICA * LTV
-        
         if taxa_mensal > 0:
             prestacao = capital * taxa_mensal / (1 - (1 + taxa_mensal) ** (-n_meses))
         else:
             prestacao = capital / n_meses
-        
         racio_a = prestacao / rendimento
         resultado["ipa_racio_a"] = round(racio_a * 100, 1)
         resultado["ipa_racio_a_prestacao"] = round(prestacao, 0)
@@ -407,15 +247,13 @@ def calcular_ipa(dados: dict) -> dict:
             "Pressão moderada" if racio_a > 0.25 else
             "Acessibilidade saudável"
         )
-    
-    # Rácio B — Pressão de Arrendamento
+
     if all(v is not None for v in [renda_m2, rendimento]):
         renda_mensal_total = renda_m2 * AREA_TIPICA
         racio_b = renda_mensal_total / rendimento
         resultado["ipa_racio_b"] = round(racio_b * 100, 1)
         resultado["ipa_racio_b_renda_total"] = round(renda_mensal_total, 0)
-    
-    # Rácio C — Divergência Salarial Acumulada (base 2019)
+
     if all(v is not None for v in [preco, rendimento, preco_2019, rendimento_2019]):
         var_preco = (preco / preco_2019 - 1) * 100
         var_rendimento = (rendimento / rendimento_2019 - 1) * 100
@@ -423,61 +261,43 @@ def calcular_ipa(dados: dict) -> dict:
         resultado["ipa_racio_c"] = round(divergencia, 1)
         resultado["ipa_racio_c_var_preco"] = round(var_preco, 1)
         resultado["ipa_racio_c_var_rendimento"] = round(var_rendimento, 1)
-    
+
     return resultado
 
 
-# ─── Cálculo DPW (Di Pasquale-Wheaton) ───────────────────────────────────────
+# ─── Cálculo DPW ─────────────────────────────────────────────────────────────
 
 def calcular_dpw(dados: dict) -> dict:
-    """
-    Modelo de 4 Quadrantes Di Pasquale-Wheaton.
-    Gera os pontos de equilíbrio e as curvas para cada quadrante.
-    
-    Q1 — Mercado de Uso:     R = f(S)    → Renda = Função(Stock)
-    Q2 — Capitalização:       P = R/yield → Preço = Renda ÷ Yield
-    Q3 — Oferta de Construção: NC = f(P)  → Nova Construção = Função(Preço)
-    Q4 — Ajuste de Stock:     NC = δ × S  → Nova Construção = Depreciação × Stock
-    
-    Parâmetros alinhados com 06·DPW do ficheiro.
-    """
-    # Parâmetros de calibração (do 03·IPA)
-    YIELD_BRUTO = 0.055           # 5.5%
-    ELAST_RENDA_STOCK = -0.6      # elasticidade renda-stock
-    ELAST_OFERTA_CONSTR = 0.3     # elasticidade oferta-construção
-    TAXA_DEPRECIACAO = 0.015      # 1.5% anual
-    STOCK_BASE_2021 = 5_972_449   # Censos 2021
-    CRESC_STOCK = 0.005           # 0.5% anual
+    YIELD_BRUTO = 0.055
+    ELAST_RENDA_STOCK = -0.6
+    ELAST_OFERTA_CONSTR = 0.3
+    TAXA_DEPRECIACAO = 0.015
+    STOCK_BASE_2021 = 5_972_449
+    CRESC_STOCK = 0.005
     ANO_REF_CENSOS = 2021
-    AREA_TIPICA = 88.65           # m²
-    
+
+    divisoes = dados.get("divisoes_por_fogo_ultimo") or 4.2
+    superficie = dados.get("superficie_habitavel_ultimo") or 21.1
+    AREA_TIPICA = divisoes * superficie
+
     ano_corrente = datetime.now().year
-    
-    # Stock corrente estimado
     anos_desde_censos = ano_corrente - ANO_REF_CENSOS
     stock_corrente = STOCK_BASE_2021 * (1 + CRESC_STOCK) ** anos_desde_censos
-    
-    # Valores observados
+
     preco_obs = dados.get("preco_mediano_ultimo")
     renda_obs_m2 = dados.get("renda_mediana_ultimo")
     fogos_concluidos = dados.get("fogos_concluidos_ultimo")
-    
+
     if any(v is None for v in [preco_obs, renda_obs_m2]):
         return {"dpw_disponivel": False}
-    
-    renda_obs = renda_obs_m2  # €/m²/mês
-    nc_anual = (fogos_concluidos or 6000) * 4  # trimestral → anual
-    
-    # Constante Q1: R_obs = A × S^ε₁  →  A = R_obs / S^ε₁
+
+    renda_obs = renda_obs_m2
+    nc_anual = (fogos_concluidos or 6000) * 4
+
     A_q1 = renda_obs / (stock_corrente ** ELAST_RENDA_STOCK)
-    
-    # Constante Q3: NC_obs = B × P^ε₃  →  B = NC_obs / P^ε₃
     B_q3 = nc_anual / (preco_obs ** ELAST_OFERTA_CONSTR)
-    
-    # Geração de pontos para curvas (20 pontos por quadrante)
+
     n_pontos = 20
-    
-    # Q1: Stock → Renda
     s_min = stock_corrente * 0.5
     s_max = stock_corrente * 1.5
     q1_pontos = []
@@ -485,8 +305,7 @@ def calcular_dpw(dados: dict) -> dict:
         s = s_min + (s_max - s_min) * i / (n_pontos - 1)
         r = A_q1 * (s ** ELAST_RENDA_STOCK)
         q1_pontos.append({"stock": round(s, 0), "renda": round(r, 4)})
-    
-    # Q2: Renda → Preço (P = R × 12 / yield)
+
     r_min = min(p["renda"] for p in q1_pontos)
     r_max = max(p["renda"] for p in q1_pontos)
     q2_pontos = []
@@ -494,8 +313,7 @@ def calcular_dpw(dados: dict) -> dict:
         r = r_min + (r_max - r_min) * i / (n_pontos - 1)
         p = (r * 12) / YIELD_BRUTO
         q2_pontos.append({"renda": round(r, 4), "preco": round(p, 0)})
-    
-    # Q3: Preço → Nova Construção
+
     p_min = min(p["preco"] for p in q2_pontos)
     p_max = max(p["preco"] for p in q2_pontos)
     q3_pontos = []
@@ -503,8 +321,7 @@ def calcular_dpw(dados: dict) -> dict:
         p = p_min + (p_max - p_min) * i / (n_pontos - 1)
         nc = B_q3 * (p ** ELAST_OFERTA_CONSTR)
         q3_pontos.append({"preco": round(p, 0), "nc": round(nc, 0)})
-    
-    # Q4: Nova Construção → Stock (NC = δ × S → S = NC / δ)
+
     nc_min = min(p["nc"] for p in q3_pontos)
     nc_max = max(p["nc"] for p in q3_pontos)
     q4_pontos = []
@@ -512,11 +329,10 @@ def calcular_dpw(dados: dict) -> dict:
         nc = nc_min + (nc_max - nc_min) * i / (n_pontos - 1)
         s = nc / TAXA_DEPRECIACAO
         q4_pontos.append({"nc": round(nc, 0), "stock": round(s, 0)})
-    
-    # Ponto de equilíbrio (observado)
+
     preco_eq = (renda_obs * 12) / YIELD_BRUTO
     nc_eq = B_q3 * (preco_eq ** ELAST_OFERTA_CONSTR)
-    
+
     return {
         "dpw_disponivel": True,
         "dpw_ano": ano_corrente,
@@ -536,16 +352,10 @@ def calcular_dpw(dados: dict) -> dict:
 # ─── Escrita na Google Sheet ──────────────────────────────────────────────────
 
 def escrever_google_sheets(todos_dados: dict, sheet_id: str, credentials_file: str):
-    """
-    Escreve os dados recolhidos numa Google Sheet com 3 separadores:
-      - VP_Indicadores       → tabela flat de todos os indicadores, 1 linha por período
-      - VP_IPA               → painel IPA calculado
-      - VP_DPW               → pontos das curvas para o modelo 4 quadrantes
-    """
     try:
         import gspread
         from google.oauth2.service_account import Credentials
-        
+
         scopes = [
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive"
@@ -553,21 +363,20 @@ def escrever_google_sheets(todos_dados: dict, sheet_id: str, credentials_file: s
         creds = Credentials.from_service_account_file(credentials_file, scopes=scopes)
         gc = gspread.authorize(creds)
         sh = gc.open_by_key(sheet_id)
-        
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-        
+
         # ── Separador 1: Indicadores ──────────────────────────────────────────
         try:
             ws_ind = sh.worksheet("VP_Indicadores")
         except gspread.WorksheetNotFound:
             ws_ind = sh.add_worksheet("VP_Indicadores", rows=500, cols=10)
-        
-        cabecalho_ind = ["Indicador", "Descrição", "Dimensão", "Período", "Valor", 
+
+        cabecalho_ind = ["Indicador", "Descrição", "Dimensão", "Período", "Valor",
                          "Unidade", "Fonte", "Notas", "Actualizado_em"]
         linhas_ind = [cabecalho_ind]
-        
+
         for nome, series in todos_dados.get("series", {}).items():
-            cfg = {**INE_INDICATORS, **BPSTAT_SERIES}.get(nome, {})
+            cfg = INE_INDICATORS.get(nome, {})
             for obs in series:
                 linhas_ind.append([
                     nome,
@@ -576,38 +385,23 @@ def escrever_google_sheets(todos_dados: dict, sheet_id: str, credentials_file: s
                     obs["periodo"],
                     obs["valor"],
                     cfg.get("unidade", ""),
-                    "INE" if nome in INE_INDICATORS else "BdP/BPStat",
+                    "INE",
                     cfg.get("notas", ""),
                     timestamp
                 ])
-        
-        # Euribor
-        for obs in todos_dados.get("euribor", []):
-            linhas_ind.append([
-                "euribor_12m",
-                ECB_EURIBOR_12M["desc"],
-                ECB_EURIBOR_12M["dimensao"],
-                obs["periodo"],
-                obs["valor"],
-                ECB_EURIBOR_12M["unidade"],
-                "BCE",
-                ECB_EURIBOR_12M["notas"],
-                timestamp
-            ])
-        
-        if len(linhas_ind) > 1:  # Só escreve se tiver dados (além do cabeçalho)
-            # Ler linhas manuais existentes (fontes não-INE) para preservar
+
+        if len(linhas_ind) > 1:
             try:
                 existentes = ws_ind.get_all_records()
                 manuais = [r for r in existentes if r.get("Fonte") not in ("INE", "BdP/BPStat")]
                 if manuais:
                     for m in manuais:
                         linhas_ind.append([
-                            m.get("Indicador",""), m.get("Descrição",""),
-                            m.get("Dimensão",""), m.get("Período",""),
-                            m.get("Valor",""), m.get("Unidade",""),
-                            m.get("Fonte",""), m.get("Notas",""),
-                            m.get("Actualizado_em","")
+                            m.get("Indicador", ""), m.get("Descrição", ""),
+                            m.get("Dimensão", ""), m.get("Período", ""),
+                            m.get("Valor", ""), m.get("Unidade", ""),
+                            m.get("Fonte", ""), m.get("Notas", ""),
+                            m.get("Actualizado_em", "")
                         ])
             except Exception:
                 pass
@@ -616,13 +410,13 @@ def escrever_google_sheets(todos_dados: dict, sheet_id: str, credentials_file: s
             print(f"  ✓ VP_Indicadores → {len(linhas_ind)-1} observações escritas")
         else:
             print(f"  ⚠ VP_Indicadores → sem dados novos, Sheet preservada")
-        
+
         # ── Separador 2: IPA ──────────────────────────────────────────────────
         try:
             ws_ipa = sh.worksheet("VP_IPA")
         except gspread.WorksheetNotFound:
-            ws_ipa = sh.add_worksheet("VP_IPA", rows=50, cols=5)
-        
+            ws_ipa = sh.add_worksheet("VP_IPA", rows=50, cols=6)
+
         ipa = todos_dados.get("ipa", {})
         linhas_ipa = [
             ["Rácio", "Valor", "Descrição", "Limiar BdP", "Estado", "Actualizado_em"],
@@ -637,17 +431,16 @@ def escrever_google_sheets(todos_dados: dict, sheet_id: str, credentials_file: s
         ws_ipa.clear()
         ws_ipa.update(linhas_ipa, value_input_option="USER_ENTERED")
         print(f"  ✓ VP_IPA → {len(linhas_ipa)-1} rácios escritos")
-        
+
         # ── Separador 3: DPW ──────────────────────────────────────────────────
         dpw = todos_dados.get("dpw", {})
         if dpw.get("dpw_disponivel"):
             try:
                 ws_dpw = sh.worksheet("VP_DPW")
             except gspread.WorksheetNotFound:
-                ws_dpw = sh.add_worksheet("VP_DPW", rows=200, cols=12)
-            
+                ws_dpw = sh.add_worksheet("VP_DPW", rows=200, cols=6)
+
             linhas_dpw = [["Quadrante", "X", "Y", "Label_X", "Label_Y", "Actualizado_em"]]
-            
             for pt in dpw["dpw_q1"]:
                 linhas_dpw.append(["Q1_Uso", pt["stock"], pt["renda"], "Stock (fogos)", "Renda (€/m²/mês)", timestamp])
             for pt in dpw["dpw_q2"]:
@@ -656,61 +449,50 @@ def escrever_google_sheets(todos_dados: dict, sheet_id: str, credentials_file: s
                 linhas_dpw.append(["Q3_Oferta", pt["preco"], pt["nc"], "Preço (€/m²)", "Nova Construção (anual)", timestamp])
             for pt in dpw["dpw_q4"]:
                 linhas_dpw.append(["Q4_Stock", pt["nc"], pt["stock"], "Nova Construção (anual)", "Stock (fogos)", timestamp])
-            
-            # Ponto de equilíbrio
             linhas_dpw.append(["EQUILIBRIO", dpw["dpw_preco_equilibrio"], dpw["dpw_renda_equilibrio"], "Preço (€/m²)", "Renda (€/m²/mês)", timestamp])
-            
+
             ws_dpw.clear()
             ws_dpw.update(linhas_dpw, value_input_option="USER_ENTERED")
             print(f"  ✓ VP_DPW → {len(linhas_dpw)-1} pontos escritos")
-        
+
         print(f"\n  ✅ Google Sheet actualizada: https://docs.google.com/spreadsheets/d/{sheet_id}")
-        
+
     except ImportError:
-        print("  ⚠ gspread não instalado: pip install gspread google-auth")
+        print("  ⚠ gspread não instalado")
     except FileNotFoundError:
-        print(f"  ⚠ Ficheiro de credenciais não encontrado: {credentials_file}")
+        print(f"  ⚠ credentials.json não encontrado: {credentials_file}")
     except Exception as e:
         print(f"  ⚠ Erro ao escrever na Sheet: {e}")
 
 
 def guardar_json_local(todos_dados: dict, ficheiro: str = "vp_dados.json"):
-    """Guarda os dados num ficheiro JSON local (backup e debug)."""
     with open(ficheiro, "w", encoding="utf-8") as f:
         json.dump(todos_dados, f, ensure_ascii=False, indent=2, default=str)
     print(f"  ✓ Dados guardados em {ficheiro}")
 
 
-# ─── Orquestrador principal ───────────────────────────────────────────────────
-
-def extrair_ultimo_valor(series: list, ano_base: int = None) -> float | None:
-    """
-    De uma lista de {periodo, valor}, extrai o último não-nulo.
-    Se ano_base for fornecido, extrai o valor do ano/período mais próximo desse ano.
-    """
+def extrair_ultimo_valor(series: list, ano_base: int = None):
     if not series:
         return None
-    
     series_validas = [s for s in series if s.get("valor") is not None]
     if not series_validas:
         return None
-    
     if ano_base:
-        # Encontrar o período mais próximo do ano base
         candidatos = [s for s in series_validas if str(ano_base) in s["periodo"]]
         if candidatos:
             return candidatos[0]["valor"]
         return None
-    
     return series_validas[-1]["valor"]
 
+
+# ─── Orquestrador principal ───────────────────────────────────────────────────
 
 def correr():
     print("=" * 60)
     print("VP · Real Estate Intelligence — Recolha de Dados")
     print(f"Início: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
-    
+
     todos_dados = {
         "meta": {
             "versao": "1.0",
@@ -722,7 +504,7 @@ def correr():
         "ipa": {},
         "dpw": {}
     }
-    
+
     # ── 1. Indicadores INE ────────────────────────────────────────────────────
     print("\n[1/4] INE — Recolha de indicadores")
     for nome, cfg in INE_INDICATORS.items():
@@ -734,29 +516,30 @@ def correr():
             print(f"     Último: {ultimo['periodo']} = {ultimo['valor']} {cfg['unidade']}")
         else:
             print(f"     ⚠ Sem dados")
-        time.sleep(0.5)  # Respeitar rate limiting
-    
-   # ── 2. BPStat e Euribor — entrada manual na Google Sheet ──────────────────
+        time.sleep(0.5)
+
+    # ── 2. Fontes manuais ─────────────────────────────────────────────────────
     print("\n[2/4] BPStat / Euribor — entrada manual (PDF BdP + euribor-rates.eu)")
-    print("  ℹ Euribor 12M, crédito habitação e taxa de esforço: inserir manualmente na Sheet")
+    print("  ℹ Euribor 12M, crédito habitação e taxa de esforço: inserir manualmente na Sheet VP_Manual")
     todos_dados["series"]["credito_habitacao"] = []
     todos_dados["series"]["taxa_esforco"] = []
     todos_dados["series"]["euribor_12m"] = []
     todos_dados["euribor"] = []
-    
-    # ── 3. (reservado) ────────────────────────────────────────────────────────
+
     print("\n[3/4] Skipped — fontes manuais")
-    euribor_series = []
-    
-    # ── 4. Calcular IPA e DPW ─────────────────────────────────────────────────
+
+    # ── 4. Cálculo IPA e DPW ─────────────────────────────────────────────────
     print("\n[4/4] Cálculo IPA e DPW")
-    
-    # Ler dados manuais do separador VP_Manual
+
+    # Ler Euribor do separador VP_Manual
     euribor_manual = None
     try:
         import gspread
         from google.oauth2.service_account import Credentials
-        scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive"
+        ]
         creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=scopes)
         gc = gspread.authorize(creds)
         sh = gc.open_by_key(SHEET_ID)
@@ -773,7 +556,7 @@ def correr():
     except Exception as e:
         print(f"  ⚠ Erro ao ler VP_Manual: {e}")
 
-    # Preparar inputs para cálculos
+    # Preparar inputs
     inputs_calc = {
         "preco_mediano_ultimo": extrair_ultimo_valor(todos_dados["series"].get("preco_mediano", [])),
         "renda_mediana_ultimo": extrair_ultimo_valor(todos_dados["series"].get("renda_mediana", [])),
@@ -785,13 +568,12 @@ def correr():
         "preco_mediano_2019": extrair_ultimo_valor(todos_dados["series"].get("preco_mediano", []), ano_base=2019),
         "rendimento_liquido_2019": extrair_ultimo_valor(todos_dados["series"].get("rendimento_liquido", []), ano_base=2019),
     }
-    
-    # ── 5. Guardar resultados ─────────────────────────────────────────────────
-    print(f"  Inputs IPA: ***{json.dumps({k: v for k, v in inputs_calc.items() if v is not None}, ensure_ascii=False)}***")
-    
+
+    print(f"  Inputs IPA: {json.dumps({k: v for k, v in inputs_calc.items() if v is not None}, ensure_ascii=False)}")
+
     todos_dados["ipa"] = calcular_ipa(inputs_calc)
     todos_dados["dpw"] = calcular_dpw(inputs_calc)
-    
+
     if todos_dados["ipa"].get("ipa_racio_a"):
         print(f"  IPA Rácio A (Compra): {todos_dados['ipa']['ipa_racio_a']}% — {todos_dados['ipa']['ipa_racio_a_estado']}")
     if todos_dados["ipa"].get("ipa_racio_b"):
@@ -799,23 +581,24 @@ def correr():
     if todos_dados["ipa"].get("ipa_racio_c") is not None:
         print(f"  IPA Rácio C (Divergência): +{todos_dados['ipa']['ipa_racio_c']} p.p.")
     if todos_dados["dpw"].get("dpw_disponivel"):
-        print(f"  DPW Equilíbrio: Preço {todos_dados['dpw']['dpw_preco_equilibrio']} €/m² · NC {todos_dados['dpw']['dpw_nc_equilibrio']:,.0f} fogos/ano")print("\n[Saída] Guardar dados")
+        print(f"  DPW Equilíbrio: Preço {todos_dados['dpw']['dpw_preco_equilibrio']} €/m²")
+
+    # ── 5. Guardar resultados ─────────────────────────────────────────────────
+    print("\n[Saída] Guardar dados")
     guardar_json_local(todos_dados, "vp_dados.json")
-    
+
     if WRITE_TO_SHEET and SHEET_ID != "SUBSTITUIR_PELO_ID_DA_TUA_GOOGLE_SHEET":
         if os.path.exists(CREDENTIALS_FILE):
             escrever_google_sheets(todos_dados, SHEET_ID, CREDENTIALS_FILE)
         else:
-            print(f"  ⚠ credentials.json não encontrado. Dados guardados apenas em vp_dados.json")
-            print(f"    Ver README.md para configurar Google Sheets.")
+            print(f"  ⚠ credentials.json não encontrado.")
     else:
-        print(f"  ℹ Escrita na Google Sheet desactivada ou SHEET_ID não configurado.")
-        print(f"    Editar SHEET_ID e WRITE_TO_SHEET em vp_collect.py para activar.")
-    
+        print(f"  ℹ Escrita na Google Sheet desactivada.")
+
     print("\n" + "=" * 60)
     print(f"✅ Concluído: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
-    
+
     return todos_dados
 
 
