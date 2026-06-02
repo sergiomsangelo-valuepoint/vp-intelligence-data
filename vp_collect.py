@@ -685,27 +685,17 @@ def correr():
             print(f"     ⚠ Sem dados")
         time.sleep(0.5)  # Respeitar rate limiting
     
-    # ── 2. BPStat (Banco de Portugal) ─────────────────────────────────────────
-    print("\n[2/4] BPStat — Recolha de séries BdP")
-    for nome, cfg in BPSTAT_SERIES.items():
-        print(f"  → {cfg['desc']} (série={cfg['serie_id']})")
-        series = fetch_bpstat(cfg["serie_id"], n_periods=60)
-        todos_dados["series"][nome] = series
-        if series:
-            ultimo = series[-1]
-            print(f"     Último: {ultimo['periodo']} = {ultimo['valor']} {cfg['unidade']}")
-        else:
-            print(f"     ⚠ Sem dados")
-        time.sleep(0.5)
+   # ── 2. BPStat e Euribor — entrada manual na Google Sheet ──────────────────
+    print("\n[2/4] BPStat / Euribor — entrada manual (PDF BdP + euribor-rates.eu)")
+    print("  ℹ Euribor 12M, crédito habitação e taxa de esforço: inserir manualmente na Sheet")
+    todos_dados["series"]["credito_habitacao"] = []
+    todos_dados["series"]["taxa_esforco"] = []
+    todos_dados["series"]["euribor_12m"] = []
+    todos_dados["euribor"] = []
     
-    # ── 3. Euribor (BCE) ──────────────────────────────────────────────────────
-    print("\n[3/4] BCE — Euribor 12M")
-    euribor_series = fetch_euribor_ecb()
-    todos_dados["euribor"] = euribor_series
-    todos_dados["series"]["euribor_12m"] = euribor_series
-    if euribor_series:
-        ultimo = euribor_series[-1]
-        print(f"  ✓ Último: {ultimo['periodo']} = {ultimo['valor']}%")
+    # ── 3. (reservado) ────────────────────────────────────────────────────────
+    print("\n[3/4] Skipped — fontes manuais")
+    euribor_series = []
     
     # ── 4. Calcular IPA e DPW ─────────────────────────────────────────────────
     print("\n[4/4] Cálculo IPA e DPW")
