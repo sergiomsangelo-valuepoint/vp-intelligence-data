@@ -215,10 +215,10 @@ def calcular_ipa(dados: dict) -> dict:
     AREA_TIPICA = divisoes * superficie
     print(f"  Área típica calculada: {divisoes} div × {superficie} m²/div = {AREA_TIPICA:.1f} m²")
 
-    LTV = 0.80
+    LTV = 0.76
     PRAZO_ANOS = 30
     SPREAD = 0.015
-    LIMIAR_BDP = 0.35
+    LIMIAR_BDP = 0.45
     LIMIAR_VP = 0.45
 
     resultado = {}
@@ -271,7 +271,7 @@ def calcular_dpw(dados: dict) -> dict:
     YIELD_BRUTO = 0.055
     ELAST_RENDA_STOCK = -0.6
     ELAST_OFERTA_CONSTR = 0.3
-    TAXA_DEPRECIACAO = 0.015
+    TAXA_DEPRECIACAO = 0.02
     STOCK_BASE_2021 = 5_972_449
     CRESC_STOCK = 0.005
     ANO_REF_CENSOS = 2021
