@@ -730,30 +730,38 @@ def correr():
     # ── 4. Calcular IPA e DPW ─────────────────────────────────────────────────
     print("\n[4/4] Cálculo IPA e DPW")
     
+    # Ler dados manuais do separador VP_Manual
+    euribor_manual = None
+    try:
+        import gspread
+        from google.oauth2.service_account import Credentials
+        scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+        creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=scopes)
+        gc = gspread.authorize(creds)
+        sh = gc.open_by_key(SHEET_ID)
+        ws_manual = sh.worksheet("VP_Manual")
+        manuais = ws_manual.get_all_records()
+        for row in manuais:
+            if row.get("Indicador") == "euribor_12m":
+                try:
+                    euribor_manual = float(str(row.get("Valor", "")).replace(",", "."))
+                except (ValueError, TypeError):
+                    pass
+        if euribor_manual:
+            print(f"  ✓ Euribor manual lido: {euribor_manual}%")
+    except Exception as e:
+        print(f"  ⚠ Erro ao ler VP_Manual: {e}")
+
     # Preparar inputs para cálculos
     inputs_calc = {
         "preco_mediano_ultimo": extrair_ultimo_valor(todos_dados["series"].get("preco_mediano", [])),
         "renda_mediana_ultimo": extrair_ultimo_valor(todos_dados["series"].get("renda_mediana", [])),
         "rendimento_liquido_ultimo": extrair_ultimo_valor(todos_dados["series"].get("rendimento_liquido", [])),
-        "euribor_12m_ultimo": extrair_ultimo_valor(euribor_series),
+        "euribor_12m_ultimo": euribor_manual,
         "fogos_concluidos_ultimo": extrair_ultimo_valor(todos_dados["series"].get("fogos_concluidos", [])),
         "preco_mediano_2019": extrair_ultimo_valor(todos_dados["series"].get("preco_mediano", []), ano_base=2019),
         "rendimento_liquido_2019": extrair_ultimo_valor(todos_dados["series"].get("rendimento_liquido", []), ano_base=2019),
     }
-    
-    print(f"  Inputs IPA: {json.dumps({k: v for k, v in inputs_calc.items() if v is not None}, ensure_ascii=False)}")
-    
-    todos_dados["ipa"] = calcular_ipa(inputs_calc)
-    todos_dados["dpw"] = calcular_dpw(inputs_calc)
-    
-    if todos_dados["ipa"].get("ipa_racio_a"):
-        print(f"  IPA Rácio A (Compra): {todos_dados['ipa']['ipa_racio_a']}% — {todos_dados['ipa']['ipa_racio_a_estado']}")
-    if todos_dados["ipa"].get("ipa_racio_b"):
-        print(f"  IPA Rácio B (Arrendamento): {todos_dados['ipa']['ipa_racio_b']}%")
-    if todos_dados["ipa"].get("ipa_racio_c") is not None:
-        print(f"  IPA Rácio C (Divergência): +{todos_dados['ipa']['ipa_racio_c']} p.p.")
-    if todos_dados["dpw"].get("dpw_disponivel"):
-        print(f"  DPW Equilíbrio: Preço {todos_dados['dpw']['dpw_preco_equilibrio']} €/m² · NC {todos_dados['dpw']['dpw_nc_equilibrio']:,.0f} fogos/ano")
     
     # ── 5. Guardar resultados ─────────────────────────────────────────────────
     print("\n[Saída] Guardar dados")
