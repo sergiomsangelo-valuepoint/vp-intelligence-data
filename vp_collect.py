@@ -290,34 +290,32 @@ def fetch_bpstat(serie_id: str, n_periods: int = 60) -> list[dict]:
 
 
 def fetch_euribor_ecb() -> list[dict]:
-    """
-    Euribor 12M via euribor-rates.eu API JSON.
-    """
-    url = "https://euribor-rates.eu/api/v1/euribors"
-    params = {"rate": "12m", "format": "json"}
+    """Euribor 12M via BCE Statistical Data Warehouse."""
+    url = "https://data-api.ecb.europa.eu/service/data/FM/M.U2.EUR.RT0.MM.EURIBOR1YD_.HSTA"
+    params = {"startPeriod": "2019-01", "format": "csvdata"}
     
     try:
         resp = requests.get(url, params=params, timeout=30,
                            headers={"User-Agent": "VP-RealEstateIntelligence/1.0"})
         resp.raise_for_status()
-        data = resp.json()
         
         resultados = []
-        for obs in data:
-            periodo = obs.get("date", "")[:7]  # YYYY-MM
-            valor = obs.get("rate")
-            try:
-                valor = float(valor) if valor is not None else None
-            except (ValueError, TypeError):
-                valor = None
-            if periodo:
-                resultados.append({"periodo": periodo, "valor": valor})
+        for linha in resp.text.strip().split("\n")[1:]:
+            partes = linha.split(",")
+            if len(partes) >= 2:
+                periodo = partes[0].strip().strip('"')
+                valor_str = partes[-1].strip().strip('"')
+                try:
+                    valor = float(valor_str)
+                    resultados.append({"periodo": periodo, "valor": valor})
+                except ValueError:
+                    continue
         
         resultados.sort(key=lambda x: x["periodo"])
         return resultados
         
     except Exception as e:
-        print(f"  ⚠ Erro Euribor: {e}")
+        print(f"  ⚠ Erro Euribor BCE: {e}")
         return []
 
 
