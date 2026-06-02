@@ -224,11 +224,32 @@ def fetch_ine(varcd: str, geo: str = "PT", n_periods: int = 20) -> list[dict]:
                 if isinstance(observacoes, list):
                     for obs in observacoes:
                         if obs.get("geocod") == geo:
-                            # Para indicadores multi-dimensão, priorizar Total/Total/Total
-                            dim3 = obs.get("dim_3_t", "")
-                            dim4 = obs.get("dim_4_t", "")
-                            dim5 = obs.get("dim_5_t", "")
-                            sinal = obs.get("sinal_conv", "")
+                           # Para indicadores multi-dimensão, procurar Total em todas as dims
+                    melhor_obs = None
+                    for obs in observacoes:
+                        if obs.get("geocod") != geo:
+                            continue
+                        if obs.get("sinal_conv") == "x":
+                            continue
+                        valor_str = obs.get("valor", obs.get("ind_string", ""))
+                        if not valor_str or valor_str == "x":
+                            continue
+                        dim3 = obs.get("dim_3_t", "Total")
+                        dim4 = obs.get("dim_4_t", "Total")
+                        dim5 = obs.get("dim_5_t", "Total")
+                        is_total = (dim3 == "Total" and dim4 == "Total" and dim5 == "Total")
+                        if is_total:
+                            melhor_obs = obs
+                            break
+                        if melhor_obs is None:
+                            melhor_obs = obs
+                    if melhor_obs:
+                        valor_str = melhor_obs.get("valor", melhor_obs.get("ind_string", ""))
+                        try:
+                            valor = float(str(valor_str).replace(" ", "").replace(",", "."))
+                            resultados.append({"periodo": periodo, "valor": valor, "geocod": geo})
+                        except (ValueError, AttributeError):
+                            pass
                             
                             # Ignorar linhas sem valor
                             if sinal == "x":
