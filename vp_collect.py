@@ -222,9 +222,6 @@ def fetch_ine(varcd: str, geo: str = "PT", n_periods: int = 20) -> list[dict]:
             # Dados é dict onde chaves são períodos (ex: "2024T4", "2026M03")
             for periodo, observacoes in dados.items():
                 if isinstance(observacoes, list):
-                    for obs in observacoes:
-                        if obs.get("geocod") == geo:
-                           # Para indicadores multi-dimensão, procurar Total em todas as dims
                     melhor_obs = None
                     for obs in observacoes:
                         if obs.get("geocod") != geo:
@@ -249,28 +246,7 @@ def fetch_ine(varcd: str, geo: str = "PT", n_periods: int = 20) -> list[dict]:
                             valor = float(str(valor_str).replace(" ", "").replace(",", "."))
                             resultados.append({"periodo": periodo, "valor": valor, "geocod": geo})
                         except (ValueError, AttributeError):
-                            pass
-                            
-                            # Ignorar linhas sem valor
-                            if sinal == "x":
-                                continue
-                            
-                            # Preferir Total em todas as dimensões
-                            is_total = all(d in ("Total", "", "T") or d not in ("Novos", "Existentes", "Famílias", "União Europeia", "Território nacional", "Restantes países", "Restantes setores institucionais") for d in [dim3, dim4, dim5])
-                            
-                            valor_str = obs.get("valor", obs.get("ind_string", ""))
-                            if valor_str and valor_str != "x":
-                                try:
-                                    valor = float(str(valor_str).replace(" ", "").replace(",", "."))
-                                    resultados.append({
-                                        "periodo": periodo,
-                                        "valor": valor,
-                                        "geocod": geo
-                                    })
-                                    break
-                                except (ValueError, AttributeError):
-                                    continue
-        
+                            pass        
         # Ordenar por período e devolver os mais recentes
         resultados.sort(key=lambda x: x["periodo"])
         return resultados[-n_periods:] if n_periods else resultados
