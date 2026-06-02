@@ -1,1 +1,65 @@
+name: VP · Recolha Trimestral de Dados
 
+on:
+  schedule:
+    - cron: "0 8 1 1,4,7,10 *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Apenas mostra dados, não escreve na Sheet (true/false)"
+        required: false
+        default: "false"
+
+jobs:
+  recolher-dados:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Instalar dependências
+        run: pip install requests gspread google-auth pandas openpyxl
+
+      - name: Criar credentials.json a partir do Secret
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: echo "$GOOGLE_CREDENTIALS_JSON" > credentials.json
+
+      - name: Configurar SHEET_ID e executar recolha
+        env:
+          VP_SHEET_ID: ${{ secrets.VP_SHEET_ID }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          python - <<'EOF'
+          import subprocess, os, sys
+          sheet_id = os.environ.get("VP_SHEET_ID", "")
+          dry_run = os.environ.get("DRY_RUN", "false").lower() == "true"
+          with open("vp_collect.py", "r") as f:
+              code = f.read()
+          code = code.replace(
+              'SHEET_ID = "SUBSTITUIR_PELO_ID_DA_TUA_GOOGLE_SHEET"',
+              f'SHEET_ID = "{sheet_id}"'
+          )
+          if dry_run:
+              code = code.replace("WRITE_TO_SHEET = True", "WRITE_TO_SHEET = False")
+          with open("vp_collect_run.py", "w") as f:
+              f.write(code)
+          result = subprocess.run([sys.executable, "vp_collect_run.py"])
+          sys.exit(result.returncode)
+          EOF
+
+      - name: Guardar vp_dados.json como artefacto
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vp-dados-${{ github.run_id }}
+          path: vp_dados.json
+          retention-days: 90
