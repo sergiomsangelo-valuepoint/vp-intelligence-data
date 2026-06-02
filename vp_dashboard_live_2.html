@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Value Point · Market Intelligence</title>
+<style>
+:root {
+  --vp-copper: #b87333;
+  --vp-copper-light: #e8d5c4;
+  --vp-copper-dark: #7a4d22;
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f5f3ef;
+  --color-text-primary: #1a1a18;
+  --color-text-secondary: #888780;
+  --color-border-tertiary: rgba(0,0,0,0.1);
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); background: var(--color-background-primary); color: var(--color-text-primary); padding: 1.5rem; max-width: 960px; margin: 0 auto; }
+
+.vp-header { display: flex; align-items: baseline; gap: 12px; padding: 0.5rem 0; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 1.25rem; }
+.vp-logo { font-size: 15px; font-weight: 500; color: var(--color-text-primary); letter-spacing: 0.04em; }
+.vp-logo span { color: var(--vp-copper); }
+.vp-badge { font-size: 11px; color: var(--color-text-secondary); background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 2px 8px; }
+.vp-updated { font-size: 10px; color: var(--color-text-secondary); margin-left: auto; }
+
+.vp-tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.vp-tab { padding: 6px 14px; font-size: 13px; color: var(--color-text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -0.5px; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; transition: color 0.15s; }
+.vp-tab:hover { color: var(--color-text-primary); }
+.vp-tab.active { color: var(--vp-copper); border-bottom-color: var(--vp-copper); font-weight: 500; }
+.vp-section { display: none; }
+.vp-section.active { display: block; }
+
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
+.metric-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.875rem 1rem; }
+.metric-label { font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; line-height: 1.3; }
+.metric-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); line-height: 1.1; }
+.metric-unit { font-size: 12px; color: var(--color-text-secondary); margin-left: 2px; }
+.metric-delta { font-size: 11px; margin-top: 3px; color: var(--color-text-secondary); }
+.delta-up { color: #d85a30; }
+.delta-down { color: #1d9e75; }
+
+.chart-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem 1.25rem; margin-bottom: 1rem; }
+.chart-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+.chart-sub { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 1rem; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; font-size: 11px; color: var(--color-text-secondary); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; vertical-align: middle; }
+
+.ipa-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+.ipa-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem; text-align: center; }
+.ipa-racio { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.ipa-value { font-size: 28px; font-weight: 500; margin-bottom: 4px; }
+.ipa-desc { font-size: 11px; color: var(--color-text-secondary); line-height: 1.4; }
+.ipa-bar-wrap { height: 5px; background: var(--color-background-secondary); border-radius: 3px; margin: 8px 0 6px; position: relative; }
+.ipa-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+.ipa-bar-marker { position: absolute; top: -4px; width: 2px; height: 13px; background: var(--color-text-secondary); opacity: 0.4; }
+
+.params-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 12px; }
+.param-item { padding: 8px 10px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); }
+.param-item span { color: var(--color-text-secondary); display: block; margin-bottom: 2px; }
+
+.status-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.status-ok { background: #1d9e75; }
+.status-pend { background: #ef9f27; }
+
+.sources-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 1rem; }
+.source-pill { font-size: 10px; color: var(--color-text-secondary); background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: 100px; padding: 2px 8px; }
+
+.loading-bar { display: flex; align-items: center; gap: 8px; padding: 12px 0; color: var(--color-text-secondary); font-size: 12px; }
+.spinner { width: 14px; height: 14px; border: 1.5px solid var(--vp-copper); border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* DPW SVG */
+#dpw-container { width: 100%; overflow: hidden; }
+</style>
+</head>
+<body>
+
+<div class="vp-header">
+  <span class="vp-logo">Value Point <span>Market Intelligence</span></span>
+  <span class="vp-badge" id="badge-trimestre">v1 · Q1 2026</span>
+  <span class="vp-badge" style="font-size:10px">PAI/2024/0053</span>
+  <span class="vp-updated" id="badge-updated"></span>
+</div>
+
+<div id="loading-indicator" class="loading-bar">
+  <div class="spinner"></div>
+  A carregar dados actualizados…
+</div>
+
+<div id="dashboard-content" style="display:none">
+
+<div class="vp-tabs">
+  <button class="vp-tab active" onclick="switchTab('visao-geral')">Visão geral</button>
+  <button class="vp-tab" onclick="switchTab('ipa')">IPA</button>
+  <button class="vp-tab" onclick="switchTab('dpw')">Modelo DPW</button>
+  <button class="vp-tab" onclick="switchTab('mercado')">Mercado</button>
+  <button class="vp-tab" onclick="switchTab('oferta')">Oferta</button>
+  <button class="vp-tab" onclick="switchTab('macro')">Macro</button>
+  <button class="vp-tab" onclick="switchTab('calendario')">Calendário</button>
+</div>
+
+<!-- VISÃO GERAL -->
+<div id="tab-visao-geral" class="vp-section active">
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-label">Preço mediano</div>
+      <div class="metric-value"><span id="kpi-preco">—</span><span class="metric-unit">€/m²</span></div>
+      <div class="metric-delta" id="kpi-preco-delta"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Renda mediana</div>
+      <div class="metric-value"><span id="kpi-renda">—</span><span class="metric-unit">€/m²/mês</span></div>
+      <div class="metric-delta" id="kpi-renda-delta"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">IPH variação anual</div>
+      <div class="metric-value"><span id="kpi-iph">—</span><span class="metric-unit">%</span></div>
+      <div class="metric-delta delta-up" id="kpi-iph-delta"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Euribor 12M</div>
+      <div class="metric-value"><span id="kpi-euribor">—</span><span class="metric-unit">%</span></div>
+      <div class="metric-delta delta-down" id="kpi-euribor-delta"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Transacções</div>
+      <div class="metric-value"><span id="kpi-trans">—</span><span class="metric-unit">fogos</span></div>
+      <div class="metric-delta" id="kpi-trans-delta"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Rendimento líquido</div>
+      <div class="metric-value"><span id="kpi-rend">—</span><span class="metric-unit">€/mês</span></div>
+      <div class="metric-delta" id="kpi-rend-delta"></div>
+    </div>
+  </div>
+
+  <div style="font-size:11px; color:var(--color-text-secondary); margin-bottom:0.75rem; font-weight:500; text-transform:uppercase; letter-spacing:0.05em;">IPA — Índice de Pressão de Acessibilidade</div>
+  <div class="ipa-grid" id="ipa-visao-grid">
+    <div class="ipa-card">
+      <div class="ipa-racio">A · compra</div>
+      <div class="ipa-value" id="ipa-a-val" style="color:#d85a30">—</div>
+      <div class="ipa-bar-wrap"><div class="ipa-bar-fill" id="ipa-a-bar" style="width:0%; background:#d85a30"></div><div class="ipa-bar-marker" style="left:77.8%"></div></div>
+      <div class="ipa-desc" id="ipa-a-desc">Prestação / Rendimento<br>Limiar VP: 45%</div>
+    </div>
+    <div class="ipa-card">
+      <div class="ipa-racio">B · arrendamento</div>
+      <div class="ipa-value" id="ipa-b-val" style="color:#ef9f27">—</div>
+      <div class="ipa-bar-wrap"><div class="ipa-bar-fill" id="ipa-b-bar" style="width:0%; background:#ef9f27"></div><div class="ipa-bar-marker" style="left:58.3%"></div></div>
+      <div class="ipa-desc">Renda total / Rendimento<br>Limiar BdP: 35%</div>
+    </div>
+    <div class="ipa-card">
+      <div class="ipa-racio">C · divergência</div>
+      <div class="ipa-value" id="ipa-c-val" style="color:#d85a30">—</div>
+      <div class="ipa-bar-wrap"><div class="ipa-bar-fill" id="ipa-c-bar" style="width:0%; background:#d85a30"></div></div>
+      <div class="ipa-desc" id="ipa-c-desc">Divergência acumulada<br>Base 2019 · Crítica > 40 p.p.</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Preço mediano habitação — série trimestral</div>
+    <div class="chart-sub">Portugal · Total · INE (€/m²)</div>
+    <div class="chart-legend">
+      <span><span class="legend-dot" style="background:#b87333"></span>Total</span>
+      <span><span class="legend-dot" style="background:#1d9e75;border-radius:0"></span>Novos</span>
+      <span><span class="legend-dot" style="background:#378add;border-radius:0;width:8px;height:3px;vertical-align:middle"></span>Existentes</span>
+    </div>
+    <div style="position:relative;width:100%;height:220px;"><canvas id="chartPreco"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Novo crédito habitação e Euribor 12M</div>
+    <div class="chart-sub">Portugal · mensal 2019–2026 · BdP / BCE</div>
+    <div class="chart-legend">
+      <span><span class="legend-dot" style="background:#378add"></span>Crédito (M€)</span>
+      <span><span class="legend-dot" style="background:#d85a30"></span>Euribor 12M (%)</span>
+    </div>
+    <div style="position:relative;width:100%;height:220px;"><canvas id="chartCredito"></canvas></div>
+  </div>
+</div>
+
+<!-- IPA -->
+<div id="tab-ipa" class="vp-section">
+  <div style="font-size:12px; color:var(--color-text-secondary); margin-bottom:1rem; line-height:1.6; padding:0.75rem 1rem; background:var(--color-background-secondary); border-radius:var(--border-radius-md);">
+    <strong style="color:var(--color-text-primary)">IPA — Índice de Pressão de Acessibilidade.</strong> Painel de três rácios independentes. Parâmetros: LTV 76%, prazo 30 anos, spread 1,5%, área típica calculada automaticamente (INE).
+  </div>
+  <div class="ipa-grid">
+    <div class="ipa-card">
+      <div class="ipa-racio">A · compra</div>
+      <div class="ipa-value" id="ipa2-a-val" style="color:#d85a30">—</div>
+      <div class="ipa-bar-wrap"><div class="ipa-bar-fill" id="ipa2-a-bar" style="width:0%; background:#d85a30"></div><div class="ipa-bar-marker" style="left:77.8%"></div></div>
+      <div class="ipa-desc" id="ipa2-a-desc">Prestação / Rendimento<br>Limiar BdP: 35% · Limiar VP: 45%</div>
+    </div>
+    <div class="ipa-card">
+      <div class="ipa-racio">B · arrendamento</div>
+      <div class="ipa-value" id="ipa2-b-val" style="color:#ef9f27">—</div>
+      <div class="ipa-bar-wrap"><div class="ipa-bar-fill" id="ipa2-b-bar" style="width:0%; background:#ef9f27"></div><div class="ipa-bar-marker" style="left:58.3%"></div></div>
+      <div class="ipa-desc">Renda total / Rendimento<br>Limiar BdP: 35%</div>
+    </div>
+    <div class="ipa-card">
+      <div class="ipa-racio">C · divergência</div>
+      <div class="ipa-value" id="ipa2-c-val" style="color:#d85a30">—</div>
+      <div class="ipa-bar-wrap"><div class="ipa-bar-fill" id="ipa2-c-bar" style="width:0%; background:#d85a30"></div></div>
+      <div class="ipa-desc" id="ipa2-c-desc">Divergência acumulada<br>Base 2019 · Crítica > 40 p.p.</div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Parâmetros de calibração IPA</div>
+    <div class="chart-sub">Valores actuais utilizados no cálculo</div>
+    <div class="params-grid">
+      <div class="param-item"><span>Área típica habitação</span><strong id="param-area">88,6 m²</strong></div>
+      <div class="param-item"><span>LTV médio mercado</span><strong>76% (BdP 2025)</strong></div>
+      <div class="param-item"><span>Prazo de crédito</span><strong>30 anos</strong></div>
+      <div class="param-item"><span>Spread bancário médio</span><strong>1,5%</strong></div>
+      <div class="param-item"><span>Yield bruto arrendamento</span><strong>5,5% (BdP/CI)</strong></div>
+      <div class="param-item"><span>Stock Censos 2021</span><strong>5 972 449 fogos</strong></div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-top:1rem">
+    <div class="chart-title">Rendimento médio líquido mensal</div>
+    <div class="chart-sub">Portugal · €/mês · INE Inquérito ao Emprego 2020–2026</div>
+    <div style="position:relative;width:100%;height:200px;"><canvas id="chartRendimento"></canvas></div>
+  </div>
+</div>
+
+<!-- DPW -->
+<div id="tab-dpw" class="vp-section">
+  <div style="font-size:12px; color:var(--color-text-secondary); margin-bottom:1rem; line-height:1.6; padding:0.75rem 1rem; background:var(--color-background-secondary); border-radius:var(--border-radius-md);">
+    <strong style="color:var(--color-text-primary)">Modelo Di Pasquale-Wheaton — 4 Quadrantes.</strong> Equilíbrio estrutural do mercado residencial: mercado de uso (renda), capitalização (preço), nova construção e ajuste de stock. O ponto laranja indica o equilíbrio observado com os dados mais recentes.
+  </div>
+  <div id="dpw-container"></div>
+  <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:12px; font-size:11px; color:var(--color-text-secondary);">
+    <div style="display:flex;align-items:center;gap:8px"><div style="width:20px;height:2px;background:#b87333;border-radius:1px"></div><span><strong>Q1 · Mercado de uso</strong> — Stock → Renda</span></div>
+    <div style="display:flex;align-items:center;gap:8px"><div style="width:20px;height:2px;background:#1d9e75;border-radius:1px"></div><span><strong>Q2 · Capitalização</strong> — Renda → Preço</span></div>
+    <div style="display:flex;align-items:center;gap:8px"><div style="width:20px;height:2px;background:#378add;border-radius:1px"></div><span><strong>Q3 · Oferta</strong> — Preço → Nova construção</span></div>
+    <div style="display:flex;align-items:center;gap:8px"><div style="width:20px;height:2px;background:#ef9f27;border-radius:1px"></div><span><strong>Q4 · Ajuste de stock</strong> — Nova construção → Stock</span></div>
+  </div>
+  <div class="metric-grid" style="margin-top:1rem">
+    <div class="metric-card">
+      <div class="metric-label">Preço equilíbrio DPW</div>
+      <div class="metric-value"><span id="dpw-preco-eq">—</span><span class="metric-unit">€/m²</span></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Nova constr. equilíbrio</div>
+      <div class="metric-value"><span id="dpw-nc-eq">—</span><span class="metric-unit">fogos/ano</span></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Stock corrente estimado</div>
+      <div class="metric-value"><span id="dpw-stock">—</span><span class="metric-unit">M fogos</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- MERCADO -->
+<div id="tab-mercado" class="vp-section">
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-label">Transacções</div>
+      <div class="metric-value"><span id="m-trans">—</span><span class="metric-unit">fogos</span></div>
+      <div class="metric-delta" id="m-trans-delta"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">IPH var. anual</div>
+      <div class="metric-value"><span id="m-iph">—</span><span class="metric-unit">%</span></div>
+      <div class="metric-delta" id="m-iph-delta"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Preço mediano</div>
+      <div class="metric-value"><span id="m-preco">—</span><span class="metric-unit">€/m²</span></div>
+      <div class="metric-delta" id="m-preco-delta"></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Transacções totais — série trimestral</div>
+    <div class="chart-sub">Portugal · N.º fogos · INE 2019–2025</div>
+    <div style="position:relative; width:100%; height:200px;"><canvas id="chartTransaccoes"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">IPH — variação anual do índice de preços</div>
+    <div class="chart-sub">Portugal · % · INE 2019–2025</div>
+    <div style="position:relative; width:100%; height:180px;"><canvas id="chartIPH"></canvas></div>
+  </div>
+</div>
+
+<!-- OFERTA -->
+<div id="tab-oferta" class="vp-section">
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-label">Fogos licenciados</div>
+      <div class="metric-value"><span id="o-lic">—</span><span class="metric-unit">/mês</span></div>
+      <div class="metric-delta" id="o-lic-delta"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Fogos concluídos</div>
+      <div class="metric-value"><span id="o-conc">—</span><span class="metric-unit">/trim</span></div>
+      <div class="metric-delta" id="o-conc-delta"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Custo construção</div>
+      <div class="metric-value"><span id="o-custo">—</span><span class="metric-unit">% a.h.</span></div>
+      <div class="metric-delta" id="o-custo-delta"></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Fogos licenciados — série mensal</div>
+    <div class="chart-sub">Portugal · construções novas · INE 2019–2026</div>
+    <div style="position:relative; width:100%; height:200px;"><canvas id="chartLicenciados"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Fogos concluídos — série trimestral</div>
+    <div class="chart-sub">Portugal · N.º · INE 2019–2025</div>
+    <div style="position:relative; width:100%; height:180px;"><canvas id="chartConcluidos"></canvas></div>
+  </div>
+</div>
+
+<!-- MACRO -->
+<div id="tab-macro" class="vp-section">
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-label">PIB real var.</div>
+      <div class="metric-value"><span id="mac-pib">—</span><span class="metric-unit">%</span></div>
+      <div class="metric-delta" id="mac-pib-delta"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Inflação HICP</div>
+      <div class="metric-value"><span id="mac-hicp">—</span><span class="metric-unit">%</span></div>
+      <div class="metric-delta" id="mac-hicp-delta"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Rendimento líquido</div>
+      <div class="metric-value"><span id="mac-rend">—</span><span class="metric-unit">€/mês</span></div>
+      <div class="metric-delta" id="mac-rend-delta"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Imigração líquida</div>
+      <div class="metric-value">97 119<span class="metric-unit">pessoas</span></div>
+      <div class="metric-delta delta-neutral">2024 · INE/Pordata</div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Inflação HICP — série mensal</div>
+    <div class="chart-sub">Portugal · % · INE/Eurostat 2019–2026</div>
+    <div style="position:relative; width:100%; height:200px;"><canvas id="chartInflacao"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">PIB real — variação anual trimestral</div>
+    <div class="chart-sub">Portugal · % · BdP/INE 2019–2025</div>
+    <div style="position:relative; width:100%; height:180px;"><canvas id="chartPIB"></canvas></div>
+  </div>
+</div>
+
+<!-- CALENDÁRIO -->
+<div id="tab-calendario" class="vp-section">
+  <div style="font-size:12px; color:var(--color-text-secondary); margin-bottom:1rem; line-height:1.5;">21 indicadores monitorizados. Cadência: mensal (BdP, BCE), trimestral (INE), anual (INE/Pordata).</div>
+  <div id="calendario-list"></div>
+</div>
+
+</div><!-- /dashboard-content -->
+
+<div class="sources-row">
+  <span class="source-pill">INE</span>
+  <span class="source-pill">Banco de Portugal</span>
+  <span class="source-pill">BCE</span>
+  <span class="source-pill">INE/Eurostat</span>
+  <span class="source-pill">Confidencial Imobiliário</span>
+  <span class="source-pill">RICS Housing Survey</span>
+  <span class="source-pill">Censos 2021</span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ─── Configuração ─────────────────────────────────────────────────────────────
+const SHEET_ID = '1vfyiRKaH9sR588chc9iuPeoW9Kn798VxtKI0anef1xE';
+const API_KEY  = 'AIzaSyBf03d-M-d-syOUIDOudpnDAnkPRCBDOFY';
+
+// ─── Utilitários ─────────────────────────────────────────────────────────────
+function fmtNum(v, dec=0) {
+  if (v===null||v===undefined||v==='') return '—';
+  const n = parseFloat(String(v).replace(',','.'));
+  if (isNaN(n)) return '—';
+  return n.toLocaleString('pt-PT', {minimumFractionDigits:dec, maximumFractionDigits:dec});
+}
+function fmtPct(v, dec=1) {
+  if (v===null||v===undefined||v==='') return '—';
+  const n = parseFloat(String(v).replace(',','.'));
+  if (isNaN(n)) return '—';
+  return n.toFixed(dec)+'%';
+}
+function corRacio(v) {
+  if (!v) return '#888780';
+  if (v>45) return '#d85a30';
+  if (v>35) return '#ef9f27';
+  if (v>25) return '#c8a030';
+  return '#1d9e75';
+}
+
+// ─── Carregar dados da Sheet ──────────────────────────────────────────────────
+async function carregarAba(aba) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(aba)}?key=${API_KEY}`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`Erro ${r.status} ao carregar ${aba}`);
+  const d = await r.json();
+  const [cab, ...linhas] = d.values || [];
+  if (!cab) return [];
+  return linhas.map(l => Object.fromEntries(cab.map((c,i)=>[c, l[i]??null])));
+}
+
+function ultimoValor(rows, nome) {
+  return rows
+    .filter(r => r['Indicador']===nome && r['Valor'])
+    .sort((a,b) => String(b['Período']).localeCompare(String(a['Período'])))[0] || null;
+}
+
+function getIPA(rows, racio) {
+  const r = rows.find(r => r['Rácio']===racio);
+  return r ? r['Valor'] : null;
+}
+
+// ─── Renderizar IPA ───────────────────────────────────────────────────────────
+function renderIPA(ipaRows) {
+  const a = parseFloat(getIPA(ipaRows,'A_pressao_compra'));
+  const b = parseFloat(getIPA(ipaRows,'B_pressao_arrendamento'));
+  const c = parseFloat(getIPA(ipaRows,'C_divergencia'));
+  const estado = ipaRows.find(r=>r['Rácio']==='A_pressao_compra')?.['Estado'] || '';
+  const prestacao = parseFloat(getIPA(ipaRows,'A_prestacao_estimada'));
+  const rendaT = parseFloat(getIPA(ipaRows,'B_renda_total'));
+
+  // visão geral e tab IPA
+  ['','2'].forEach(sfx => {
+    const prefix = sfx ? 'ipa2' : 'ipa';
+    if (!isNaN(a)) {
+      document.getElementById(`${prefix}-a-val`).textContent = fmtPct(a);
+      document.getElementById(`${prefix}-a-val`).style.color = corRacio(a);
+      document.getElementById(`${prefix}-a-bar`).style.width = Math.min(a/60*100,100)+'%';
+      document.getElementById(`${prefix}-a-bar`).style.background = corRacio(a);
+      const desc = document.getElementById(`${prefix}-a-desc`);
+      if (desc) desc.innerHTML = `Prestação / Rendimento · <strong style="color:${corRacio(a)}">${estado}</strong>${prestacao ? `<br>Prestação estimada: ${fmtNum(prestacao,0)}€/mês` : ''}`;
+    }
+    if (!isNaN(b)) {
+      document.getElementById(`${prefix}-b-val`).textContent = fmtPct(b);
+      document.getElementById(`${prefix}-b-val`).style.color = corRacio(b);
+      document.getElementById(`${prefix}-b-bar`).style.width = Math.min(b/60*100,100)+'%';
+      document.getElementById(`${prefix}-b-bar`).style.background = corRacio(b);
+    }
+    if (!isNaN(c)) {
+      document.getElementById(`${prefix}-c-val`).textContent = `+${c.toFixed(1)} p.p.`;
+      document.getElementById(`${prefix}-c-val`).style.color = c>40 ? '#d85a30' : c>20 ? '#ef9f27' : '#1d9e75';
+      document.getElementById(`${prefix}-c-bar`).style.width = Math.min(c/60*100,100)+'%';
+      document.getElementById(`${prefix}-c-bar`).style.background = c>40 ? '#d85a30' : '#ef9f27';
+    }
+  });
+}
+
+// ─── Renderizar DPW ─────────────────────────────────────────────────────────
+// Reconstrói as curvas suaves directamente a partir dos parâmetros de calibração
+// Os pontos da Sheet são usados apenas para extrair os parâmetros de equilíbrio
+
+function renderDPW(dpwRows) {
+  const eq = dpwRows.find(r=>r['Quadrante']==='EQUILIBRIO');
+  const q1sample = dpwRows.filter(r=>r['Quadrante']==='Q1_Uso');
+  const q3sample = dpwRows.filter(r=>r['Quadrante']==='Q3_Oferta');
+  const q4sample = dpwRows.filter(r=>r['Quadrante']==='Q4_Stock');
+
+  if (!eq || !q1sample.length) return;
+
+  // Parâmetros de calibração (alinhados com vp_collect.py)
+  const YIELD       = 0.055;   // 5.5%
+  const ELAST_Q1    = -0.60;   // elasticidade renda-stock
+  const ELAST_Q3    =  0.30;   // elasticidade oferta-construção
+  const DEPRECIACAO =  0.02;   // 2% anual
+
+  // Extrair stock corrente dos dados Q4
+  const pf = (arr,k) => arr.map(d=>parseFloat(d[k])).filter(v=>!isNaN(v));
+  const q4sV = pf(q4sample,'Y');
+  const STOCK = q4sV.length ? Math.max(...q4sV) : 6123000;
+
+  // Valores observados do ponto de equilíbrio
+  const PRECO_EQ  = parseFloat(eq['X']);
+  const RENDA_EQ  = parseFloat(eq['Y']);
+
+  // Calibrar constantes a partir do equilíbrio
+  // Q1: R = A * S^ε1  →  A = R_eq / S^ε1
+  const A_Q1 = RENDA_EQ / Math.pow(STOCK, ELAST_Q1);
+  // Q3: NC = B * P^ε3  →  B = NC_eq / P^ε3
+  const NC_EQ = DEPRECIACAO * STOCK;
+  const B_Q3 = NC_EQ / Math.pow(PRECO_EQ, ELAST_Q3);
+
+  // Actualizar KPIs
+  document.getElementById('dpw-preco-eq').textContent = fmtNum(PRECO_EQ, 0);
+  document.getElementById('dpw-nc-eq').textContent = fmtNum(NC_EQ, 0);
+  document.getElementById('dpw-stock').textContent = (STOCK/1e6).toFixed(2);
+
+  // Gerar curvas suaves com N pontos
+  const N = 120;
+
+  // Ranges para cada eixo (±40% em torno do equilíbrio)
+  const sMin = STOCK * 0.55, sMax = STOCK * 1.45;
+  const rMin = A_Q1 * Math.pow(sMax, ELAST_Q1);  // renda no stock máximo
+  const rMax = A_Q1 * Math.pow(sMin, ELAST_Q1);  // renda no stock mínimo
+  const pMin = rMin * 12 / YIELD;
+  const pMax = rMax * 12 / YIELD;
+  const ncMin = B_Q3 * Math.pow(pMin, ELAST_Q3);
+  const ncMax = B_Q3 * Math.pow(pMax, ELAST_Q3);
+
+  // Dimensões SVG
+  const W=560, H=560, PAD=56, MEIO=W/2;
+
+  // Funções de normalização — eixos partilhados entre quadrantes adjacentes
+  const nrm = (v,min,max,a,b) => max===min?(a+b)/2 : a + (v-min)/(max-min)*(b-a);
+
+  // Q1: x=stock (direita→esquerda), y=renda (cima→baixo dentro do Q superior)
+  const xQ1 = s => nrm(s, sMin, sMax, MEIO-PAD, PAD);
+  const yRenda = r => nrm(r, rMin, rMax, MEIO-PAD, PAD);  // partilhado Q1+Q2
+
+  // Q2: x=preço (esq→dir), y=renda (mesmo eixo que Q1)
+  const xPreco = p => nrm(p, pMin, pMax, MEIO+PAD, W-PAD);  // partilhado Q2+Q3
+
+  // Q3: x=preço (mesmo que Q2), y=NC (baixo→cima dentro do Q inferior)
+  const yNC = n => nrm(n, ncMin, ncMax, MEIO+PAD, H-PAD);  // partilhado Q3+Q4
+
+  // Q4: x=NC (direita→esquerda), y=stock
+  const xNC = n => nrm(n, ncMin, ncMax, MEIO-PAD, PAD);
+  const yStock = s => nrm(s, sMin, sMax, H-PAD, MEIO+PAD);
+
+  // Gerar pontos
+  function pts(n, xFn, yFn) {
+    const arr = [];
+    for (let i=0; i<n; i++) {
+      const t = i/(n-1);
+      arr.push(xFn(t).toFixed(1)+','+yFn(t).toFixed(1));
+    }
+    return 'M '+arr.join(' L ');
+  }
+
+  // Q1: stock de sMin a sMax → renda calculada
+  const pQ1 = pts(N,
+    t => xQ1(sMin + t*(sMax-sMin)),
+    t => { const s=sMin+t*(sMax-sMin); return yRenda(A_Q1*Math.pow(s,ELAST_Q1)); }
+  );
+
+  // Q2: preço de pMin a pMax → renda = preço * yield / 12
+  const pQ2 = pts(N,
+    t => xPreco(pMin + t*(pMax-pMin)),
+    t => { const p=pMin+t*(pMax-pMin); return yRenda(p*YIELD/12); }
+  );
+
+  // Q3: preço de pMin a pMax → NC calculada
+  const pQ3 = pts(N,
+    t => xPreco(pMin + t*(pMax-pMin)),
+    t => { const p=pMin+t*(pMax-pMin); return yNC(B_Q3*Math.pow(p,ELAST_Q3)); }
+  );
+
+  // Q4: NC de ncMin a ncMax → stock = NC / depreciação
+  const pQ4 = pts(N,
+    t => xNC(ncMin + t*(ncMax-ncMin)),
+    t => { const n=ncMin+t*(ncMax-ncMin); return yStock(n/DEPRECIACAO); }
+  );
+
+  // Ponto de equilíbrio (intersecção em Q2)
+  const eqX = xPreco(PRECO_EQ).toFixed(1);
+  const eqY = yRenda(RENDA_EQ).toFixed(1);
+
+  // Linhas de equilíbrio cruzadas (tracejado)
+  const linhasEq = `
+    <line x1="${eqX}" y1="${PAD}" x2="${eqX}" y2="${MEIO-PAD}" stroke="#d85a30" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.5"/>
+    <line x1="${MEIO+PAD}" y1="${eqY}" x2="${W-PAD}" y2="${eqY}" stroke="#d85a30" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.5"/>
+    <line x1="${xQ1(STOCK).toFixed(1)}" y1="${PAD}" x2="${xQ1(STOCK).toFixed(1)}" y2="${MEIO-PAD}" stroke="#b87333" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.4"/>
+  `;
+
+  // Fundos dos quadrantes
+  const fundos = `
+    <rect x="${PAD}" y="${PAD}" width="${MEIO-PAD*1.5}" height="${MEIO-PAD*1.5}" fill="rgba(184,115,51,0.05)" stroke="rgba(184,115,51,0.15)" stroke-width="0.5" rx="4"/>
+    <rect x="${MEIO+PAD/2}" y="${PAD}" width="${MEIO-PAD*1.5}" height="${MEIO-PAD*1.5}" fill="rgba(29,158,117,0.05)" stroke="rgba(29,158,117,0.15)" stroke-width="0.5" rx="4"/>
+    <rect x="${MEIO+PAD/2}" y="${MEIO+PAD/2}" width="${MEIO-PAD*1.5}" height="${MEIO-PAD*1.5}" fill="rgba(55,138,221,0.05)" stroke="rgba(55,138,221,0.15)" stroke-width="0.5" rx="4"/>
+    <rect x="${PAD}" y="${MEIO+PAD/2}" width="${MEIO-PAD*1.5}" height="${MEIO-PAD*1.5}" fill="rgba(239,159,39,0.05)" stroke="rgba(239,159,39,0.15)" stroke-width="0.5" rx="4"/>
+  `;
+
+  // Labels dos quadrantes
+  const labels = `
+    <text x="${PAD+8}" y="${PAD+14}" style="font-size:11px;fill:#b87333;font-weight:500;font-family:inherit">Q1 · Mercado de uso</text>
+    <text x="${PAD+8}" y="${PAD+27}" style="font-size:9px;fill:#888;font-family:inherit">Stock → Renda</text>
+    <text x="${MEIO+PAD*.8}" y="${PAD+14}" style="font-size:11px;fill:#1d9e75;font-weight:500;font-family:inherit">Q2 · Capitalização</text>
+    <text x="${MEIO+PAD*.8}" y="${PAD+27}" style="font-size:9px;fill:#888;font-family:inherit">Renda → Preço</text>
+    <text x="${MEIO+PAD*.8}" y="${MEIO+PAD*.8+10}" style="font-size:11px;fill:#378add;font-weight:500;font-family:inherit">Q3 · Oferta</text>
+    <text x="${MEIO+PAD*.8}" y="${MEIO+PAD*.8+23}" style="font-size:9px;fill:#888;font-family:inherit">Preço → Nova constr.</text>
+    <text x="${PAD+8}" y="${MEIO+PAD*.8+10}" style="font-size:11px;fill:#ef9f27;font-weight:500;font-family:inherit">Q4 · Ajuste stock</text>
+    <text x="${PAD+8}" y="${MEIO+PAD*.8+23}" style="font-size:9px;fill:#888;font-family:inherit">Nova constr. → Stock</text>
+  `;
+
+  // Eixos centrais
+  const eixos = `
+    <line x1="${MEIO}" y1="${PAD-8}" x2="${MEIO}" y2="${H-PAD+8}" stroke="rgba(0,0,0,0.12)" stroke-width="1"/>
+    <line x1="${PAD-8}" y1="${MEIO}" x2="${W-PAD+8}" y2="${MEIO}" stroke="rgba(0,0,0,0.12)" stroke-width="1"/>
+  `;
+
+  // Ponto de equilíbrio
+  const eqDot = `
+    <circle cx="${eqX}" cy="${eqY}" r="10" fill="#d85a30" opacity="0.12"/>
+    <circle cx="${eqX}" cy="${eqY}" r="5" fill="#d85a30" opacity="0.9"/>
+    <circle cx="${eqX}" cy="${eqY}" r="2" fill="white"/>
+    <text x="${(parseFloat(eqX)+10).toFixed(1)}" y="${(parseFloat(eqY)-8).toFixed(1)}" style="font-size:10px;fill:#d85a30;font-weight:500;font-family:inherit">Equilíbrio</text>
+  `;
+
+  const svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-height:480px;display:block">
+    ${fundos}${eixos}${labels}${linhasEq}
+    <path d="${pQ1}" fill="none" stroke="#b87333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${pQ2}" fill="none" stroke="#1d9e75" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${pQ3}" fill="none" stroke="#378add" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${pQ4}" fill="none" stroke="#ef9f27" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${eqDot}
+  </svg>`;
+
+  document.getElementById('dpw-container').innerHTML = svg;
+}
+
+// ─── Gráficos históricos (dados hardcoded — séries longas) ────────────────────
+function initCharts() {
+  const copper='#b87333', teal='#1d9e75', blue='#378add', coral='#d85a30', amber='#ef9f27';
+  const defaults = {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+    scales:{
+      x:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:10},color:'#888'}},
+      y:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:10},color:'#888'}}
+    }
+  };
+
+
+  // Preço mediano série trimestral
+  new Chart(document.getElementById('chartPreco'),{type:'line',
+    data:{labels:['Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25'],
+    datasets:[
+      {label:'Total',data:[1633,1661,1709,1777,1845,1923,1991,2076],borderColor:copper,backgroundColor:'rgba(184,115,51,0.08)',tension:0.3,fill:true,pointRadius:3,borderWidth:2},
+      {label:'Novos',data:[1552,1577,1625,1689,1762,1841,1921,2013],borderColor:teal,tension:0.3,fill:false,pointRadius:2,borderWidth:1.5,borderDash:[4,3]},
+      {label:'Existentes',data:[1985,2013,2067,2147,2202,2268,2294,2328],borderColor:blue,tension:0.3,fill:false,pointRadius:2,borderWidth:1.5,borderDash:[2,2]}
+    ]},
+    options:{...defaults,scales:{...defaults.scales,y:{...defaults.scales.y,ticks:{callback:v=>v.toLocaleString('pt-PT')+' €',font:{size:10},color:'#888'}}}}
+  });
+
+  // Crédito habitação + Euribor
+  const meses46=['Jan 19','','Mar 19','','','Jun 19','','','Set 19','','','Dez 19','','','Mar 20','','','Jun 20','','','Set 20','','','Dez 20','','','Mar 21','','','Jun 21','','','Set 21','','','Dez 21','','','Mar 22','','','Jun 22','','','Set 22','','Dez 22'];
+  const credito=[842,823,872,787,949,856,955,812,975,973,963,1143,965,914,942,795,844,871,974,906,1291,1090,1197,1267,1278,1020,1409,1238,1329,1332,1377,1237,1412,1267,1374,1501,1245,1329,1758,1380,1573,1500,1451,1302,1448,1361];
+  const euriborH=[-0.335,-0.331,-0.332,-0.334,-0.343,-0.377,-0.444,-0.497,-0.499,-0.479,-0.456,-0.45,-0.441,-0.465,-0.469,-0.31,-0.3,-0.379,-0.48,-0.536,-0.569,-0.602,-0.616,-0.633,-0.641,-0.638,-0.629,-0.628,-0.626,-0.63,-0.633,-0.639,-0.635,-0.63,-0.643,-0.659,-0.638,-0.56,-0.494,-0.362,-0.192,0.144,0.349,0.647,1.431,1.839];
+  new Chart(document.getElementById('chartCredito'),{type:'bar',
+    data:{labels:meses46,datasets:[
+      {label:'Crédito (M€)',data:credito,backgroundColor:'rgba(55,138,221,0.55)',yAxisID:'y',order:2},
+      {label:'Euribor 12M (%)',data:euriborH,type:'line',borderColor:coral,tension:0.3,pointRadius:0,borderWidth:2,yAxisID:'y1',order:1}
+    ]},
+    options:{...defaults,scales:{
+      x:{...defaults.scales.x,ticks:{...defaults.scales.x.ticks,autoSkip:true,maxTicksLimit:8}},
+      y:{position:'left',grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:10},color:'#888',callback:v=>v+' M'}},
+      y1:{position:'right',grid:{display:false},ticks:{font:{size:10},color:coral,callback:v=>v.toFixed(1)+'%'}}
+    }}
+  });
+
+  // Rendimento líquido (para tab IPA)
+  new Chart(document.getElementById('chartRendimento'),{type:'line',
+    data:{labels:['Q4 20','Q1 21','Q2 21','Q3 21','Q4 21','Q1 22','Q2 22','Q3 22','Q4 22','Q1 23','Q2 23','Q3 23','Q4 23','Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25','Q1 26'],
+    datasets:[{label:'Rendimento líquido (€)',data:[949,953,957,971,997,993,1003,1020,1033,1035,1057,1076,1082,1091,1140,1178,1194,1226,1250,1264,1298,1333],borderColor:teal,backgroundColor:'rgba(29,158,117,0.06)',tension:0.4,fill:true,pointRadius:2,borderWidth:2}]},
+    options:{...defaults,scales:{...defaults.scales,y:{...defaults.scales.y,ticks:{callback:v=>v+' €',font:{size:10},color:'#888'}}}}
+  });
+
+  // Transacções
+  new Chart(document.getElementById('chartTransaccoes'),{type:'bar',
+    data:{labels:['Q1 19','Q2 19','Q3 19','Q4 19','Q1 20','Q2 20','Q3 20','Q4 20','Q1 21','Q2 21','Q1 22','Q2 22','Q3 22','Q4 22','Q1 23','Q2 23','Q3 23','Q4 23','Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25'],
+    datasets:[{data:[36954,36681,39554,41676,36399,26379,35596,39139,34614,41736,43447,45885,43544,43607,42223,42223,42223,42223,43447,45885,43544,43607,42223,42223,42223,43084],backgroundColor:'rgba(55,138,221,0.5)',borderColor:blue,borderWidth:0.5}]},
+    options:{...defaults,scales:{...defaults.scales,x:{...defaults.scales.x,ticks:{...defaults.scales.x.ticks,autoSkip:true,maxTicksLimit:8}}}}
+  });
+
+  // IPH
+  new Chart(document.getElementById('chartIPH'),{type:'line',
+    data:{labels:['Q1 19','Q2 19','Q3 19','Q1 20','Q2 20','Q3 20','Q1 21','Q2 21','Q3 21','Q1 22','Q2 22','Q3 22','Q1 23','Q2 23','Q3 23','Q1 24','Q2 24','Q3 24','Q1 25','Q2 25','Q3 25','Q4 25'],
+    datasets:[{data:[9.2,9.2,9.5,9.5,10.8,10.8,10.4,10.6,10.6,9.7,9.7,6.9,8,8,7.8,11.5,11.6,12.9,13.2,13.2,13.1,18.9],borderColor:copper,backgroundColor:'rgba(184,115,51,0.07)',tension:0.4,fill:true,pointRadius:2,borderWidth:2}]},
+    options:{...defaults,scales:{...defaults.scales,y:{...defaults.scales.y,ticks:{callback:v=>v+'%',font:{size:10},color:'#888'}}}}
+  });
+
+  // Fogos licenciados
+  new Chart(document.getElementById('chartLicenciados'),{type:'bar',
+    data:{labels:['Jan 19','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez 19','Jan 20','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez 20','Jan 21','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez 21','Jan 22','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Mar 26'],
+    datasets:[{data:[2264,2061,2086,1836,2374,1842,2158,1685,2086,2503,1900,1651,2309,2095,1823,1375,1880,1981,2282,1829,2038,2233,2044,1752,2084,2149,2717,2399,2376,2141,2099,2045,2261,1729,2193,1905,2247,2232,2589,1982,2429,2005,1977,1883,2028,1512],backgroundColor:'rgba(29,158,117,0.45)',borderColor:teal,borderWidth:0}]},
+    options:{...defaults,scales:{...defaults.scales,x:{...defaults.scales.x,ticks:{...defaults.scales.x.ticks,autoSkip:true,maxTicksLimit:10}}}}
+  });
+
+  // Fogos concluídos
+  new Chart(document.getElementById('chartConcluidos'),{type:'line',
+    data:{labels:['Q1 19','Q2 19','Q3 19','Q1 20','Q2 20','Q3 20','Q1 21','Q2 21','Q3 21','Q1 22','Q2 22','Q3 22','Q1 23','Q2 23','Q3 23','Q1 24','Q2 24','Q3 24','Q1 25','Q2 25','Q3 25','Q4 25'],
+    datasets:[{data:[2987,2987,3092,3092,3399,3399,3476,3476,3848,3848,4344,4344,4281,4281,4450,4450,4805,4805,4474,4474,5356,6602],borderColor:teal,backgroundColor:'rgba(29,158,117,0.07)',tension:0.4,fill:true,pointRadius:2,borderWidth:2}]},
+    options:defaults
+  });
+
+  // Inflação HICP
+  new Chart(document.getElementById('chartInflacao'),{type:'line',
+    data:{labels:['Jan 19','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez 19','Jan 20','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez 20','Jan 21','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez 21','Jan 22','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Abr 26'],
+    datasets:[{data:[0.48,0.94,0.85,0.77,0.42,0.39,-0.32,-0.09,-0.11,0.02,0.32,0.42,0.8,0.38,0.05,-0.22,-0.72,0.13,0.14,-0.01,-0.14,-0.07,-0.22,-0.23,0.3,0.48,0.45,0.55,1.24,0.51,1.47,1.54,1.48,1.83,2.58,2.74,3.34,4.19,5.33,7.2,8,8.73,9.06,8.94,9.28,3.35],borderColor:coral,backgroundColor:'rgba(216,90,48,0.07)',tension:0.4,fill:true,pointRadius:0,borderWidth:2}]},
+    options:{...defaults,scales:{...defaults.scales,x:{...defaults.scales.x,ticks:{...defaults.scales.x.ticks,autoSkip:true,maxTicksLimit:8}},y:{...defaults.scales.y,ticks:{callback:v=>v.toFixed(1)+'%',font:{size:10},color:'#888'}}}}
+  });
+
+  // PIB
+  new Chart(document.getElementById('chartPIB'),{type:'bar',
+    data:{labels:['Q1 19','Q2 19','Q1 20','Q2 20','Q1 21','Q2 21','Q1 22','Q2 22','Q3 22','Q4 22','Q1 23','Q2 23','Q3 23','Q4 23','Q1 24','Q2 24','Q3 24','Q1 26'],
+    datasets:[{data:[3.1,2.7,2.4,2.7,-2.4,-17.6,-6.1,-6.7,-5.4,16.5,5.5,7.2,12.1,7.5,5,5,5,2.3],backgroundColor:d=>d.raw>=0?'rgba(29,158,117,0.55)':'rgba(216,90,48,0.55)',borderWidth:0}]},
+    options:{...defaults,scales:{...defaults.scales,x:{...defaults.scales.x,ticks:{...defaults.scales.x.ticks,autoSkip:true,maxTicksLimit:8}},y:{...defaults.scales.y,ticks:{callback:v=>v+'%',font:{size:10},color:'#888'}}}}
+  });
+}
+
+// ─── Calendário (estático) ────────────────────────────────────────────────────
+function initCalendario() {
+  const calendario=[
+    {ind:'Preço mediano habitação',dim:'Procura',fonte:'INE',cadencia:'Trimestral',estado:'Verificado'},
+    {ind:'Renda mediana mensal',dim:'Procura',fonte:'INE',cadencia:'Trimestral',estado:'Verificado'},
+    {ind:'Rendimento médio líquido',dim:'Procura',fonte:'INE',cadencia:'Trimestral',estado:'Verificado'},
+    {ind:'Taxa de esforço — compra',dim:'Procura',fonte:'BdP',cadencia:'Trimestral',estado:'Verificado'},
+    {ind:'Euribor 12M',dim:'Procura',fonte:'BCE',cadencia:'Mensal',estado:'Verificado'},
+    {ind:'Migração líquida',dim:'Procura',fonte:'INE/Pordata',cadencia:'Anual',estado:'Verificado'},
+    {ind:'Fogos licenciados',dim:'Oferta',fonte:'INE',cadencia:'Mensal',estado:'Verificado'},
+    {ind:'Fogos concluídos',dim:'Oferta',fonte:'INE',cadencia:'Trimestral',estado:'Verificado'},
+    {ind:'Divisões por fogo',dim:'Oferta',fonte:'INE',cadencia:'Anual',estado:'Verificado'},
+    {ind:'Superfície habitável',dim:'Oferta',fonte:'INE',cadencia:'Anual',estado:'Verificado'},
+    {ind:'Pipeline construção',dim:'Oferta',fonte:'CI/SIR',cadencia:'Mensal',estado:'Pendente'},
+    {ind:'Custo construção ICCHN',dim:'Viabilidade',fonte:'INE',cadencia:'Trimestral',estado:'Verificado'},
+    {ind:'IPH — variação anual',dim:'Mercado',fonte:'INE',cadencia:'Trimestral',estado:'Verificado'},
+    {ind:'Transacções totais',dim:'Mercado',fonte:'INE',cadencia:'Trimestral',estado:'Verificado'},
+    {ind:'Saldo novos compradores',dim:'Mercado',fonte:'CI/RICS',cadencia:'Mensal',estado:'Pendente'},
+    {ind:'PIB real — variação',dim:'Macro',fonte:'BdP/INE',cadencia:'Trimestral',estado:'Verificado'},
+    {ind:'Inflação HICP',dim:'Macro',fonte:'INE/Eurostat',cadencia:'Mensal',estado:'Verificado'},
+    {ind:'Rendimento médio líquido',dim:'Procura',fonte:'INE',cadencia:'Trimestral',estado:'Verificado'},
+  ];
+  const cols={Procura:'#b87333',Oferta:'#1d9e75',Mercado:'#378add',Macro:'#ef9f27',Viabilidade:'#888780'};
+  const dims=['Procura','Oferta','Mercado','Macro','Viabilidade'];
+  const list=document.getElementById('calendario-list');
+  dims.forEach(dim=>{
+    const items=calendario.filter(c=>c.dim===dim);
+    if (!items.length) return;
+    const grp=document.createElement('div');
+    grp.style.cssText='margin-bottom:1rem';
+    grp.innerHTML=`<div style="font-size:11px;font-weight:500;color:${cols[dim]};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">${dim}</div>`;
+    items.forEach(c=>{
+      grp.innerHTML+=`<div class="status-row"><div class="status-dot ${c.estado==='Verificado'?'status-ok':'status-pend'}"></div><span style="flex:1;color:var(--color-text-primary)">${c.ind}</span><span style="color:var(--color-text-secondary);min-width:70px;text-align:right">${c.fonte}</span><span style="color:var(--color-text-secondary);min-width:60px;text-align:right;font-size:11px">${c.cadencia}</span></div>`;
+    });
+    list.appendChild(grp);
+  });
+}
+
+// ─── Função principal ─────────────────────────────────────────────────────────
+async function init() {
+  try {
+    const [indRows, ipaRows, dpwRows] = await Promise.all([
+      carregarAba('VP_Indicadores'),
+      carregarAba('VP_IPA'),
+      carregarAba('VP_DPW'),
+    ]);
+
+    // KPIs visão geral
+    const kpis = [
+      {id:'kpi-preco', nome:'preco_mediano', dec:0},
+      {id:'kpi-renda', nome:'renda_mediana', dec:2},
+      {id:'kpi-iph',   nome:'iph_variacao',  dec:1},
+      {id:'kpi-trans', nome:'transaccoes_total', dec:0},
+      {id:'kpi-rend',  nome:'rendimento_liquido', dec:0},
+    ];
+    kpis.forEach(k=>{
+      const v=ultimoValor(indRows, k.nome);
+      if (v) {
+        document.getElementById(k.id).textContent = fmtNum(v['Valor'], k.dec);
+        const delta = document.getElementById(k.id+'-delta');
+        if (delta) delta.textContent = v['Período'] || '';
+      }
+    });
+
+    // Euribor do VP_Manual
+    try {
+      const manualRows = await carregarAba('VP_Manual');
+      const eur = manualRows.find(r=>r['Indicador']==='euribor_12m');
+      if (eur) {
+        document.getElementById('kpi-euribor').textContent = fmtNum(eur['Valor'],2);
+        document.getElementById('kpi-euribor-delta').textContent = eur['Período']||'';
+      }
+    } catch(e) {}
+
+    // KPIs mercado
+    const mKpis=[
+      {id:'m-trans',nome:'transaccoes_total',dec:0},
+      {id:'m-iph',nome:'iph_variacao',dec:1},
+      {id:'m-preco',nome:'preco_mediano',dec:0},
+      {id:'o-lic',nome:'fogos_licenciados',dec:0},
+      {id:'o-conc',nome:'fogos_concluidos',dec:0},
+      {id:'o-custo',nome:'custo_construcao',dec:1},
+      {id:'mac-pib',nome:'pib_real',dec:1},
+      {id:'mac-hicp',nome:'ipc_hicp',dec:2},
+      {id:'mac-rend',nome:'rendimento_liquido',dec:0},
+    ];
+    mKpis.forEach(k=>{
+      const v=ultimoValor(indRows,k.nome);
+      if (v) {
+        const el=document.getElementById(k.id);
+        if (el) el.textContent=fmtNum(v['Valor'],k.dec);
+        const delta=document.getElementById(k.id+'-delta');
+        if (delta) delta.textContent=v['Período']||'';
+      }
+    });
+
+    // Data actualização
+    if (ipaRows.length>0 && ipaRows[0]['Actualizado_em']) {
+      document.getElementById('badge-updated').textContent = 'Actualizado '+ipaRows[0]['Actualizado_em'];
+    }
+
+    // IPA
+    renderIPA(ipaRows);
+
+    // DPW
+    renderDPW(dpwRows);
+
+    document.getElementById('loading-indicator').style.display='none';
+    document.getElementById('dashboard-content').style.display='block';
+
+  } catch(err) {
+    document.getElementById('loading-indicator').innerHTML =
+      `<span style="color:#d85a30">Erro ao carregar dados: ${err.message}</span>`;
+  }
+}
+
+// ─── Tab switching ────────────────────────────────────────────────────────────
+function switchTab(id) {
+  const ids=['visao-geral','ipa','dpw','mercado','oferta','macro','calendario'];
+  document.querySelectorAll('.vp-tab').forEach((t,i)=>t.classList.toggle('active',ids[i]===id));
+  document.querySelectorAll('.vp-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+// ─── Inicializar ──────────────────────────────────────────────────────────────
+initCharts();
+initCalendario();
+init();
+</script>
+</body>
+</html>
