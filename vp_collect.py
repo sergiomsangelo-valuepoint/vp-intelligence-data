@@ -152,6 +152,24 @@ INE_INDICATORS = {
         "dimensao": "Macro",
         "notas": "Contas Nacionais Trimestrais · INE / BdP"
     },
+  "divisoes_por_fogo": {
+        "varcd": "0000079",
+        "geo": "PT",
+        "desc": "Divisões por fogo concluído (N.º)",
+        "unidade": "N.º",
+        "cadencia": "Anual",
+        "dimensao": "Oferta",
+        "notas": "Estatísticas das Obras Concluídas · INE · Construções novas"
+    },
+    "superficie_habitavel": {
+        "varcd": "0008333",
+        "geo": "PT",
+        "desc": "Superfície habitável média das divisões concluídas (m²)",
+        "unidade": "m²",
+        "cadencia": "Anual",
+        "dimensao": "Oferta",
+        "notas": "Estatísticas das Obras Concluídas · INE · Construções novas"
+    },
 }
 
 # ─── Mapeamento de Séries BPStat (Banco de Portugal) ─────────────────────────
@@ -347,7 +365,10 @@ def calcular_ipa(dados: dict) -> dict:
       - Spread bancário médio: 1.5%
     """
     # Parâmetros de calibração
-    AREA_TIPICA = 88.65       # m²
+    divisoes = dados.get("divisoes_por_fogo_ultimo") or 4.2
+    superficie = dados.get("superficie_habitavel_ultimo") or 21.1
+    AREA_TIPICA = divisoes * superficie
+    print(f"  Área típica calculada: {divisoes} div × {superficie} m²/div = {AREA_TIPICA:.1f} m²")
     LTV = 0.80
     PRAZO_ANOS = 30
     SPREAD = 0.015            # 1.5%
@@ -758,6 +779,8 @@ def correr():
         "renda_mediana_ultimo": extrair_ultimo_valor(todos_dados["series"].get("renda_mediana", [])),
         "rendimento_liquido_ultimo": extrair_ultimo_valor(todos_dados["series"].get("rendimento_liquido", [])),
         "euribor_12m_ultimo": euribor_manual,
+        "divisoes_por_fogo_ultimo": extrair_ultimo_valor(todos_dados["series"].get("divisoes_por_fogo", [])),
+        "superficie_habitavel_ultimo": extrair_ultimo_valor(todos_dados["series"].get("superficie_habitavel", [])),
         "fogos_concluidos_ultimo": extrair_ultimo_valor(todos_dados["series"].get("fogos_concluidos", [])),
         "preco_mediano_2019": extrair_ultimo_valor(todos_dados["series"].get("preco_mediano", []), ano_base=2019),
         "rendimento_liquido_2019": extrair_ultimo_valor(todos_dados["series"].get("rendimento_liquido", []), ano_base=2019),
