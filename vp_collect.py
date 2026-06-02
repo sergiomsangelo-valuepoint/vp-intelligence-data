@@ -27,7 +27,7 @@ import os
 # ─── Configuração ────────────────────────────────────────────────────────────
 
 # ID da Google Sheet (retirar do URL: docs.google.com/spreadsheets/d/[ID]/edit)
-SHEET_ID = "SUBSTITUIR_PELO_ID_DA_TUA_GOOGLE_SHEET"
+SHEET_ID = "id: 1vfyiRKaH9sR588chc9iuPeoW9Kn798VxtKI0anef1xE"
 
 # Caminho para o ficheiro de credenciais da Service Account
 CREDENTIALS_FILE = "credentials.json"
