@@ -787,7 +787,19 @@ def correr():
     }
     
     # ── 5. Guardar resultados ─────────────────────────────────────────────────
-    print("\n[Saída] Guardar dados")
+    print(f"  Inputs IPA: ***{json.dumps({k: v for k, v in inputs_calc.items() if v is not None}, ensure_ascii=False)}***")
+    
+    todos_dados["ipa"] = calcular_ipa(inputs_calc)
+    todos_dados["dpw"] = calcular_dpw(inputs_calc)
+    
+    if todos_dados["ipa"].get("ipa_racio_a"):
+        print(f"  IPA Rácio A (Compra): {todos_dados['ipa']['ipa_racio_a']}% — {todos_dados['ipa']['ipa_racio_a_estado']}")
+    if todos_dados["ipa"].get("ipa_racio_b"):
+        print(f"  IPA Rácio B (Arrendamento): {todos_dados['ipa']['ipa_racio_b']}%")
+    if todos_dados["ipa"].get("ipa_racio_c") is not None:
+        print(f"  IPA Rácio C (Divergência): +{todos_dados['ipa']['ipa_racio_c']} p.p.")
+    if todos_dados["dpw"].get("dpw_disponivel"):
+        print(f"  DPW Equilíbrio: Preço {todos_dados['dpw']['dpw_preco_equilibrio']} €/m² · NC {todos_dados['dpw']['dpw_nc_equilibrio']:,.0f} fogos/ano")print("\n[Saída] Guardar dados")
     guardar_json_local(todos_dados, "vp_dados.json")
     
     if WRITE_TO_SHEET and SHEET_ID != "SUBSTITUIR_PELO_ID_DA_TUA_GOOGLE_SHEET":
