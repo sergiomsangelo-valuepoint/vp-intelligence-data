@@ -606,39 +606,6 @@ function initCharts(ind, eurVal) {
     options:{...D,scales:{...D.scales,x:xt(8),y:{...D.scales.y,ticks:{callback:v=>v+'%',font:{size:10},color:'var(--text2)'}}}}
   });
 
-  // Fogos licenciados — eixo X correcto com mês/ano
-  const licLabels = [
-    'Jan 19','Fev 19','Mar 19','Abr 19','Mai 19','Jun 19','Jul 19','Ago 19','Set 19','Out 19','Nov 19','Dez 19',
-    'Jan 20','Fev 20','Mar 20','Abr 20','Mai 20','Jun 20','Jul 20','Ago 20','Set 20','Out 20','Nov 20','Dez 20',
-    'Jan 21','Fev 21','Mar 21','Abr 21','Mai 21','Jun 21','Jul 21','Ago 21','Set 21','Out 21','Nov 21','Dez 21',
-    'Jan 22','Fev 22','Mar 22','Abr 22','Mai 22','Jun 22','Jul 22','Ago 22','Set 22','Out 22','Nov 22','Dez 22',
-    'Jan 23','Fev 23','Mar 23','Abr 23','Mai 23','Jun 23','Jul 23','Ago 23','Set 23','Out 23','Nov 23','Dez 23',
-    'Jan 24','Fev 24','Mar 24','Abr 24','Mai 24','Jun 24','Jul 24','Ago 24','Set 24','Out 24','Nov 24','Dez 24',
-    'Jan 25','Fev 25','Mar 25','Abr 25','Mai 25','Jun 25','Jul 25','Ago 25','Set 25','Out 25','Nov 25','Dez 25',
-    'Jan 26','Fev 26','Mar 26'
-  ];
-  const licData = [
-    2264,2061,2086,1836,2374,1842,2158,1685,2086,2503,1900,1651,
-    2309,2095,1823,1375,1880,1981,2282,1829,2038,2233,2044,1752,
-    2084,2149,2717,2399,2376,2141,2099,2045,2261,1729,2193,1905,
-    2247,2232,2589,1982,2429,2005,1977,1883,2028,1950,2100,1880,
-    2150,2050,2200,1950,2300,2100,2150,1900,2250,2000,2100,1850,
-    2180,2050,2250,2000,2350,2150,2100,1950,2300,2050,2150,1900,
-    2200,2050,2150,2000,2300,2100,2050,1950,2150,2000,2050,1900,
-    1950,2000,1512
-  ];
-  new Chart(document.getElementById('cLic'),{type:'bar',
-    data:{labels:licLabels,datasets:[{label:'Fogos licenciados',data:licData,backgroundColor:'rgba(29,158,117,0.45)',borderColor:'#1d9e75',borderWidth:0}]},
-    options:{...D,scales:{...D.scales,x:xt(12),y:{...D.scales.y,ticks:{font:{size:10},color:'var(--text2)'}}}}
-  });
-
-  // Fogos concluídos
-  new Chart(document.getElementById('cConc'),{type:'line',
-    data:{labels:['Q1 19','Q2 19','Q3 19','Q4 19','Q1 20','Q2 20','Q3 20','Q4 20','Q1 21','Q2 21','Q3 21','Q4 21','Q1 22','Q2 22','Q3 22','Q4 22','Q1 23','Q2 23','Q3 23','Q4 23','Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25'],
-    datasets:[{label:'Fogos concluídos',data:[2987,3050,3092,3100,3092,3150,3399,3350,3476,3520,3848,3900,3848,4100,4344,4300,4281,4350,4450,4400,4450,4700,4805,4900,4474,4600,5356,6602],borderColor:'#1d9e75',backgroundColor:'rgba(29,158,117,0.07)',tension:0.4,fill:true,pointRadius:2,borderWidth:2}]},
-    options:{...D,scales:{...D.scales,x:xt(8)}}
-  });
-
   // Inflação IPC — com labels de período correctos no eixo X
   const ipcLabels = [
     'Jan 19','Fev 19','Mar 19','Abr 19','Mai 19','Jun 19','Jul 19','Ago 19','Set 19','Out 19','Nov 19','Dez 19',
