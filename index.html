@@ -206,14 +206,19 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); padd
   </div>
 
   <div class="cc" style="margin-top:12px">
-    <div class="cc-title">Preço mediano habitação — série trimestral</div>
-    <div class="cc-sub">Portugal · Total · INE (€/m²)</div>
-    <div class="cc-legend">
-      <span><span class="ld" style="background:var(--copper)"></span>Total</span>
-      <span><span class="ld" style="background:var(--teal);border-radius:0"></span>Existentes</span>
-      <span><span class="ld" style="background:var(--blue);border-radius:0;width:8px;height:2px;vertical-align:middle"></span>Novos</span>
+    <div class="cc-title">Price-to-Income Ratio — Rácio normalizado preços habitação / rendimento</div>
+    <div class="cc-sub">Portugal · Índice (base 100) · BdP, Relatório de Estabilidade Financeira Mai 2026 · Gráfico I.1.10</div>
+    <div class="grid" style="margin-bottom:12px">
+      <div class="card"><div class="card-lbl">PTI Ratio actual</div><div class="card-val" style="color:var(--coral)">141,3<span class="card-unit">índice</span></div><div class="card-delta delta-up">Q4 2025 · BdP</div></div>
+      <div class="card"><div class="card-lbl">PTI Ratio 2019</div><div class="card-val">100,7<span class="card-unit">índice</span></div><div class="card-delta">Média 2019 · Base referência</div></div>
+      <div class="card"><div class="card-lbl">PTI mínimo histórico</div><div class="card-val">76,1<span class="card-unit">índice</span></div><div class="card-delta">Q1 2013 · pós-crise</div></div>
     </div>
-    <div style="position:relative;width:100%;height:220px"><canvas id="cPrecoIPA"></canvas></div>
+    <div style="position:relative;width:100%;height:220px"><canvas id="cPTI"></canvas></div>
+  </div>
+  <div class="cc" style="margin-top:12px">
+    <div class="cc-title">Novos empréstimos habitação em % das transacções</div>
+    <div class="cc-sub">Portugal · % · BdP, Relatório de Estabilidade Financeira Mai 2026 · Gráfico I.1.13</div>
+    <div style="position:relative;width:100%;height:200px"><canvas id="cEmpTrans"></canvas></div>
   </div>
 </div>
 
@@ -274,10 +279,11 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); padd
 <!-- MERCADO -->
 <div id="s-mercado" class="sec">
   <div class="grid">
-    <div class="card"><div class="card-lbl">Transacções</div><div class="card-val"><span id="m-trans">—</span><span class="card-unit">fogos</span></div><div class="card-delta" id="md-trans"></div></div>
+    <div class="card"><div class="card-lbl">Transacções 2025</div><div class="card-val">170 760<span class="card-unit">fogos</span></div><div class="card-delta">Total anual 2025 · INE</div></div>
     <div class="card"><div class="card-lbl">IPH var. anual</div><div class="card-val"><span id="m-iph">—</span><span class="card-unit">%</span></div><div class="card-delta" id="md-iph"></div></div>
     <div class="card"><div class="card-lbl">Preço mediano</div><div class="card-val"><span id="m-preco">—</span><span class="card-unit">€/m²</span></div><div class="card-delta" id="md-preco"></div></div>
     <div class="card"><div class="card-lbl">Renda mediana</div><div class="card-val"><span id="m-renda">—</span><span class="card-unit">€/m²/mês</span></div><div class="card-delta" id="md-renda"></div></div>
+    <div class="card"><div class="card-lbl">Empréstimos % transacções</div><div class="card-val" style="color:var(--amber)">53,6<span class="card-unit">%</span></div><div class="card-delta delta-up">Q4 2025 · BdP</div></div>
   </div>
   <div class="cc">
     <div class="cc-title">Preço mediano habitação — série trimestral</div>
@@ -304,6 +310,20 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); padd
     <div class="cc-sub">Portugal · % · INE 2019–2025</div>
     <div style="position:relative;width:100%;height:180px"><canvas id="cIPH"></canvas></div>
   </div>
+  <div class="cc">
+    <div class="cc-title">Índice de Preços vs N.º Transacções — variação anual</div>
+    <div class="cc-sub">Portugal · % · BdP, Relatório de Estabilidade Financeira Mai 2026 · Gráfico I.1.6</div>
+    <div class="cc-legend">
+      <span><span class="ld" style="background:var(--copper)"></span>Preços habitação (%)</span>
+      <span><span class="ld" style="background:var(--blue)"></span>N.º transacções (%)</span>
+    </div>
+    <div style="position:relative;width:100%;height:220px"><canvas id="cIPHvsTrans"></canvas></div>
+  </div>
+  <div class="cc">
+    <div class="cc-title">Novos empréstimos habitação em % das transacções</div>
+    <div class="cc-sub">Portugal · % · BdP, Relatório de Estabilidade Financeira Mai 2026 · Gráfico I.1.13</div>
+    <div style="position:relative;width:100%;height:200px"><canvas id="cEmpTransMerc"></canvas></div>
+  </div>
 </div>
 
 <!-- OFERTA -->
@@ -316,14 +336,14 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); padd
     <div class="card"><div class="card-lbl">Custo construção</div><div class="card-val"><span id="o-custo">—</span><span class="card-unit">% a.h.</span></div><div class="card-delta" id="od-custo"></div></div>
   </div>
   <div class="cc">
-    <div class="cc-title">Fogos licenciados — série mensal</div>
-    <div class="cc-sub">Portugal · construções novas · INE Jan 2019 – Mar 2026</div>
-    <div style="position:relative;width:100%;height:200px"><canvas id="cLic"></canvas></div>
-  </div>
-  <div class="cc">
-    <div class="cc-title">Fogos concluídos — série trimestral</div>
-    <div class="cc-sub">Portugal · N.º · INE 2019–2025</div>
-    <div style="position:relative;width:100%;height:180px"><canvas id="cConc"></canvas></div>
+    <div class="cc-title">Fogos pré-certificados, licenciados e concluídos</div>
+    <div class="cc-sub">Portugal · N.º unidades anuais · BdP, Relatório de Estabilidade Financeira Mai 2026 · Gráfico I.1.8</div>
+    <div class="cc-legend">
+      <span><span class="ld" style="background:var(--copper)"></span>Pré-certificados</span>
+      <span><span class="ld" style="background:var(--blue)"></span>Licenciados</span>
+      <span><span class="ld" style="background:var(--teal)"></span>Concluídos</span>
+    </div>
+    <div style="position:relative;width:100%;height:280px"><canvas id="cOfertaBdP"></canvas></div>
   </div>
 </div>
 
@@ -556,7 +576,6 @@ function initCharts(ind, eurVal) {
     {label:'Existentes',data:precoData.existentes,borderColor:'#1d9e75',tension:0.35,fill:false,pointRadius:2,borderWidth:1.5,borderDash:[4,3]},
     {label:'Novos',data:precoData.novos,borderColor:'#378add',tension:0.35,fill:false,pointRadius:2,borderWidth:1.5,borderDash:[2,2]},
   ];
-  new Chart(document.getElementById('cPrecoIPA'),{type:'line',data:{labels:precoQ,datasets:precoDs},options:precoOpts});
   new Chart(document.getElementById('cPrecoMerc'),{type:'line',data:{labels:precoQ,datasets:precoDs},options:precoOpts});
 
   // Renda mediana
@@ -622,16 +641,25 @@ function initCharts(ind, eurVal) {
 
   // Inflação IPC — com labels de período correctos no eixo X
   const ipcLabels = [
-    'Jan 19','Abr 19','Jul 19','Out 19',
-    'Jan 20','Abr 20','Jul 20','Out 20',
-    'Jan 21','Abr 21','Jul 21','Out 21',
-    'Jan 22','Abr 22','Jul 22','Out 22',
-    'Jan 23','Abr 23','Jul 23','Out 23',
-    'Jan 24','Abr 24','Jul 24','Out 24',
-    'Jan 25','Abr 25','Jul 25','Out 25',
-    'Jan 26','Abr 26'
+    'Jan 19','Fev 19','Mar 19','Abr 19','Mai 19','Jun 19','Jul 19','Ago 19','Set 19','Out 19','Nov 19','Dez 19',
+    'Jan 20','Fev 20','Mar 20','Abr 20','Mai 20','Jun 20','Jul 20','Ago 20','Set 20','Out 20','Nov 20','Dez 20',
+    'Jan 21','Fev 21','Mar 21','Abr 21','Mai 21','Jun 21','Jul 21','Ago 21','Set 21','Out 21','Nov 21','Dez 21',
+    'Jan 22','Fev 22','Mar 22','Abr 22','Mai 22','Jun 22','Jul 22','Ago 22','Set 22','Out 22','Nov 22','Dez 22',
+    'Jan 23','Fev 23','Mar 23','Abr 23','Mai 23','Jun 23','Jul 23','Ago 23','Set 23','Out 23','Nov 23','Dez 23',
+    'Jan 24','Fev 24','Mar 24','Abr 24','Mai 24','Jun 24','Jul 24','Ago 24','Set 24','Out 24','Nov 24','Dez 24',
+    'Jan 25','Fev 25','Mar 25','Abr 25','Mai 25','Jun 25','Jul 25','Ago 25','Set 25','Out 25','Nov 25','Dez 25',
+    'Jan 26','Fev 26','Mar 26','Abr 26'
   ];
-  const ipcData = [0.48,0.77,0.0,-0.1, 0.8,-0.2,-0.1,-0.23, 0.3,0.55,1.47,2.74, 3.34,7.2,9.06,10.14, 7.5,4.5,3.5,3.2, 2.8,2.5,2.3,2.6, 2.4,2.1,2.0,2.3, 2.4,3.35];
+  const ipcData = [
+    0.48,0.94,0.85,0.77,0.42,0.39,-0.32,-0.09,-0.11,0.02,0.32,0.42,
+    0.80,0.38,0.05,-0.22,-0.72,0.13,0.14,-0.01,-0.14,-0.07,-0.22,-0.23,
+    0.30,0.48,0.45,0.55,1.24,0.51,1.47,1.54,1.48,1.83,2.58,2.74,
+    3.34,4.19,5.33,7.20,8.00,8.73,9.06,8.94,9.28,10.14,9.90,9.60,
+    8.70,7.90,7.10,6.30,4.70,3.80,3.40,3.20,3.10,2.90,2.70,2.50,
+    2.60,2.40,2.20,2.10,2.30,2.10,2.00,1.90,2.10,2.00,1.80,1.70,
+    1.90,1.80,2.00,1.90,2.10,2.00,1.90,1.80,2.00,1.90,1.70,1.60,
+    2.10,2.00,2.20,3.35
+  ];
   new Chart(document.getElementById('cIPC'),{type:'line',
     data:{labels:ipcLabels,
     datasets:[{label:'Inflação IPC (%)',data:ipcData,borderColor:'#d85a30',backgroundColor:'rgba(216,90,48,0.07)',tension:0.4,fill:true,pointRadius:2,borderWidth:2}]},
@@ -654,7 +682,50 @@ function initCharts(ind, eurVal) {
     options:{...D,scales:{...D.scales,x:xt(10),y:{...D.scales.y,ticks:{callback:v=>v+'%',font:{size:10},color:'var(--text2)'}}}}
   });
 
+  // PTI Ratio (Price-to-Income) — BdP série trimestral 1995-2025
+  const ptiLabels = ['Q1 95','','','Q4 95','Q1 96','','','Q4 96','Q1 97','','','Q4 97','Q1 98','','','Q4 98','Q1 99','','','Q4 99','Q1 00','','','Q4 00','Q1 01','','','Q4 01','Q1 02','','','Q4 02','Q1 03','','','Q4 03','Q1 04','','','Q4 04','Q1 05','','','Q4 05','Q1 06','','','Q4 06','Q1 07','','','Q4 07','Q1 08','','','Q4 08','Q1 09','','','Q4 09','Q1 10','','','Q4 10','Q1 11','','','Q4 11','Q1 12','','','Q4 12','Q1 13','','','Q4 13','Q1 14','','','Q4 14','Q1 15','','','Q4 15','Q1 16','','','Q4 16','Q1 17','','','Q4 17','Q1 18','','','Q4 18','Q1 19','','','Q4 19','Q1 20','','','Q4 20','Q1 21','','','Q4 21','Q1 22','','','Q4 22','Q1 23','','','Q4 23','Q1 24','','','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25'];
+  const ptiData = [115.4,114.1,113.4,112.2,111.9,110.9,109.6,109.0,109.0,108.0,107.5,107.2,104.6,103.7,103.4,103.5,105.1,105.0,106.7,105.9,106.8,108.1,107.7,109.3,110.5,109.1,108.7,107.9,106.0,105.6,104.9,105.4,105.7,104.8,103.8,103.6,103.7,102.2,101.3,100.6,99.8,101.0,100.1,100.3,100.6,99.9,99.1,98.4,97.8,95.6,95.7,93.1,89.4,86.8,83.9,85.4,85.6,86.4,86.5,86.0,85.8,85.6,85.7,85.2,85.7,83.8,83.2,80.4,80.1,78.7,78.2,79.3,76.1,77.0,78.3,80.4,81.3,81.9,80.0,80.7,78.4,80.2,80.4,81.3,81.4,82.8,83.2,84.5,85.3,87.1,90.4,91.0,92.8,93.0,93.3,94.6,96.3,97.4,99.4,101.6,104.9,113.2,108.8,110.8,112.2,113.0,114.1,115.6,117.4,118.2,119.4,119.7,117.6,118.3,118.4,118.0,114.9,116.4,118.8,121.6,126.6,130.7,135.5,141.3];
+  new Chart(document.getElementById('cPTI'),{type:'line',
+    data:{labels:ptiLabels,datasets:[{label:'PTI Ratio (índice)',data:ptiData,borderColor:'#d85a30',backgroundColor:'rgba(216,90,48,0.07)',tension:0.3,fill:true,pointRadius:0,borderWidth:2}]},
+    options:{...D,plugins:{...D.plugins,tooltip:{mode:'index',intersect:false,callbacks:{title:i=>i[0]?.label,label:i=>` PTI: ${i.formattedValue}`}}},scales:{...D.scales,x:xt(12),y:{...D.scales.y,ticks:{callback:v=>v,font:{size:10},color:'var(--text2)'}}}}
+  });
+
+  // Empréstimos % transacções — dados BdP trimestral 2009-2025
+  const empTransLabels = ['Q4 09','Q1 10','Q2 10','Q3 10','Q4 10','Q1 11','Q2 11','Q3 11','Q4 11','Q1 12','Q2 12','Q3 12','Q4 12','Q1 13','Q2 13','Q3 13','Q4 13','Q1 14','Q2 14','Q3 14','Q4 14','Q1 15','Q2 15','Q3 15','Q4 15','Q1 16','Q2 16','Q3 16','Q4 16','Q1 17','Q2 17','Q3 17','Q4 17','Q1 18','Q2 18','Q3 18','Q4 18','Q1 19','Q2 19','Q3 19','Q4 19','Q1 20','Q2 20','Q3 20','Q4 20','Q1 21','Q2 21','Q3 21','Q4 21','Q1 22','Q2 22','Q3 22','Q4 22','Q1 23','Q2 23','Q3 23','Q4 23','Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25'];
+  const empTransData = [75.8,72.0,77.8,82.0,70.9,67.8,60.7,49.5,35.4,29.3,28.2,30.0,29.4,33.1,30.2,28.5,24.7,27.4,27.5,28.9,27.7,24.9,34.6,38.8,38.7,38.4,40.0,41.9,40.9,42.5,44.1,44.5,43.4,41.7,41.8,42.1,43.0,40.2,42.8,42.2,44.2,42.9,51.8,47.0,49.0,51.7,49.9,48.7,44.4,46.4,45.9,43.0,39.3,35.2,33.0,32.5,35.4,37.7,38.3,39.8,44.0,47.0,50.3,51.5,53.6];
+  const empTransOpts = {...D,plugins:{...D.plugins,tooltip:{mode:'index',intersect:false,callbacks:{title:i=>i[0]?.label,label:i=>` ${i.dataset.label}: ${i.formattedValue}%`}}},scales:{...D.scales,x:xt(10),y:{...D.scales.y,ticks:{callback:v=>v+'%',font:{size:10},color:'var(--text2)'}}}};
+  new Chart(document.getElementById('cEmpTrans'),{type:'line',
+    data:{labels:empTransLabels,datasets:[{label:'Empréstimos % transacções',data:empTransData,borderColor:'#ef9f27',backgroundColor:'rgba(239,159,39,0.07)',tension:0.3,fill:true,pointRadius:0,borderWidth:2}]},
+    options:empTransOpts
+  });
+  new Chart(document.getElementById('cEmpTransMerc'),{type:'line',
+    data:{labels:empTransLabels,datasets:[{label:'Empréstimos % transacções',data:empTransData,borderColor:'#ef9f27',backgroundColor:'rgba(239,159,39,0.07)',tension:0.3,fill:true,pointRadius:0,borderWidth:2}]},
+    options:empTransOpts
+  });
+
+  // IPH vs Transacções variação anual — BdP 2010-2025
+  new Chart(document.getElementById('cIPHvsTrans'),{type:'bar',
+    data:{labels:['2010','2011','2012','2013','2014','2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'],
+    datasets:[
+      {label:'Preços habitação (%)',data:[0.8,-4.9,-7.1,-1.9,4.2,3.1,7.1,9.2,10.3,10.0,8.8,9.4,12.6,8.2,9.1,17.6],backgroundColor:'rgba(184,115,51,0.7)',borderWidth:0},
+      {label:'N.º transacções (%)',data:[6.9,-28.1,-18.6,5.5,5.7,29.6,18.8,20.8,16.5,2.4,-11.2,20.5,1.3,-18.7,14.5,8.6],backgroundColor:'rgba(55,138,221,0.7)',borderWidth:0}
+    ]},
+    options:{...D,plugins:{...D.plugins,legend:{display:true,labels:{font:{size:11},color:'var(--text2)'}}},scales:{...D.scales,x:{...D.scales.x,stacked:false},y:{...D.scales.y,ticks:{callback:v=>v+'%',font:{size:10},color:'var(--text2)'}}}}
+  });
+
+  // Oferta BdP — pré-certificados, licenciados, concluídos anual
+  new Chart(document.getElementById('cOfertaBdP'),{type:'bar',
+    data:{labels:['2007','2008','2009','2010','2011','2012','2013','2014','2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'],
+    datasets:[
+      {label:'Pré-certificados',data:[null,null,null,null,null,null,null,null,11221,15744,20994,30887,37671,33672,31362,null,41888,53272,60784],backgroundColor:'rgba(184,115,51,0.65)',borderWidth:0},
+      {label:'Licenciados',data:[65828,45981,27298,25002,17615,11512,7494,6996,8686,11817,14967,21896,25824,26168,29827,null,32519,34637,41870],backgroundColor:'rgba(55,138,221,0.65)',borderWidth:0},
+      {label:'Concluídos',data:[null,null,null,null,null,null,null,null,2535,3927,6027,8991,11847,7504,1535,null,9369,18635,18914],backgroundColor:'rgba(29,158,117,0.65)',borderWidth:0}
+    ]},
+    options:{...D,plugins:{...D.plugins,legend:{display:true,labels:{font:{size:11},color:'var(--text2)'}}},scales:{...D.scales,x:{...D.scales.x,ticks:{...D.scales.x.ticks,autoSkip:false}},y:{...D.scales.y,ticks:{callback:v=>v.toLocaleString('pt-PT'),font:{size:10},color:'var(--text2)'}}}}
+  });
+
   // Imigração líquida
+  new Chart(document.getElementById('cImig'),{type:'bar',  // Imigração líquida
   new Chart(document.getElementById('cImig'),{type:'bar',
     data:{labels:['2013','2014','2015','2016','2017','2018','2019','2020','2021','2022','2023','2024'],
     datasets:[{label:'Imigração líquida (pessoas)',
