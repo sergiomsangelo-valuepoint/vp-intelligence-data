@@ -215,10 +215,10 @@ def calcular_ipa(dados: dict) -> dict:
     AREA_TIPICA = divisoes * superficie
     print(f"  Área típica calculada: {divisoes} div × {superficie} m²/div = {AREA_TIPICA:.1f} m²")
 
-    LTV = 0.76
+    LTV = 0.80
     PRAZO_ANOS = 30
     SPREAD = 0.015
-    LIMIAR_BDP = 0.45
+    LIMIAR_BDP = 0.35
     LIMIAR_VP = 0.45
 
     resultado = {}
@@ -271,7 +271,7 @@ def calcular_dpw(dados: dict) -> dict:
     YIELD_BRUTO = 0.055
     ELAST_RENDA_STOCK = -0.6
     ELAST_OFERTA_CONSTR = 0.3
-    TAXA_DEPRECIACAO = 0.02
+    TAXA_DEPRECIACAO = 0.015
     STOCK_BASE_2021 = 5_972_449
     CRESC_STOCK = 0.005
     ANO_REF_CENSOS = 2021
@@ -531,8 +531,10 @@ def correr():
     # ── 4. Cálculo IPA e DPW ─────────────────────────────────────────────────
     print("\n[4/4] Cálculo IPA e DPW")
 
-    # Ler Euribor do separador VP_Manual
+    # Ler dados manuais do separador VP_Manual
     euribor_manual = None
+    preco_2019_manual = None
+    rendimento_2019_manual = None
     try:
         import gspread
         from google.oauth2.service_account import Credentials
@@ -546,13 +548,24 @@ def correr():
         ws_manual = sh.worksheet("VP_Manual")
         manuais = ws_manual.get_all_records()
         for row in manuais:
-            if row.get("Indicador") == "euribor_12m":
-                try:
-                    euribor_manual = float(str(row.get("Valor", "")).replace(",", "."))
-                except (ValueError, TypeError):
-                    pass
+            ind = row.get("Indicador", "")
+            val_str = str(row.get("Valor", "")).replace(",", ".")
+            try:
+                val = float(val_str) if val_str else None
+            except (ValueError, TypeError):
+                val = None
+            if ind == "euribor_12m" and val:
+                euribor_manual = val
+            elif ind == "preco_mediano_2019" and val:
+                preco_2019_manual = val
+            elif ind == "rendimento_liquido_2019" and val:
+                rendimento_2019_manual = val
         if euribor_manual:
             print(f"  ✓ Euribor manual lido: {euribor_manual}%")
+        if preco_2019_manual:
+            print(f"  ✓ Preço mediano 2019: {preco_2019_manual} €/m²")
+        if rendimento_2019_manual:
+            print(f"  ✓ Rendimento líquido 2019: {rendimento_2019_manual} €/mês")
     except Exception as e:
         print(f"  ⚠ Erro ao ler VP_Manual: {e}")
 
@@ -565,8 +578,8 @@ def correr():
         "divisoes_por_fogo_ultimo": extrair_ultimo_valor(todos_dados["series"].get("divisoes_por_fogo", [])),
         "superficie_habitavel_ultimo": extrair_ultimo_valor(todos_dados["series"].get("superficie_habitavel", [])),
         "fogos_concluidos_ultimo": extrair_ultimo_valor(todos_dados["series"].get("fogos_concluidos", [])),
-        "preco_mediano_2019": extrair_ultimo_valor(todos_dados["series"].get("preco_mediano", []), ano_base=2019),
-        "rendimento_liquido_2019": extrair_ultimo_valor(todos_dados["series"].get("rendimento_liquido", []), ano_base=2019),
+        "preco_mediano_2019": preco_2019_manual or extrair_ultimo_valor(todos_dados["series"].get("preco_mediano", []), ano_base=2019),
+        "rendimento_liquido_2019": rendimento_2019_manual or extrair_ultimo_valor(todos_dados["series"].get("rendimento_liquido", []), ano_base=2019),
     }
 
     print(f"  Inputs IPA: {json.dumps({k: v for k, v in inputs_calc.items() if v is not None}, ensure_ascii=False)}")
