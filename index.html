@@ -330,9 +330,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); padd
 <div id="s-oferta" class="sec">
   <div class="grid">
     <div class="card"><div class="card-lbl">Fogos licenciados</div><div class="card-val"><span id="o-lic">—</span><span class="card-unit">/mês</span></div><div class="card-delta" id="od-lic"></div></div>
-    <div class="card"><div class="card-lbl">Total lic. 2024</div><div class="card-val">25 756<span class="card-unit">fogos</span></div><div class="card-delta">2024 · INE</div></div>
+    <div class="card"><div class="card-lbl">Total lic. 2024</div><div class="card-val">41 870<span class="card-unit">fogos</span></div><div class="card-delta">2025 · BdP/INE</div></div>
     <div class="card"><div class="card-lbl">Fogos concluídos</div><div class="card-val"><span id="o-conc">—</span><span class="card-unit">/trim</span></div><div class="card-delta" id="od-conc"></div></div>
-    <div class="card"><div class="card-lbl">Total conc. 2024</div><div class="card-val">19 034<span class="card-unit">fogos</span></div><div class="card-delta">2024 · INE</div></div>
+    <div class="card"><div class="card-lbl">Total conc. 2024</div><div class="card-val">26 714<span class="card-unit">fogos</span></div><div class="card-delta">2025 · BdP/INE</div></div>
     <div class="card"><div class="card-lbl">Custo construção</div><div class="card-val"><span id="o-custo">—</span><span class="card-unit">% a.h.</span></div><div class="card-delta" id="od-custo"></div></div>
   </div>
   <div class="cc">
@@ -381,7 +381,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); padd
       <span><span class="ld" style="background:var(--coral)"></span>Variação de agregados (INE EPR / estimativa)</span>
     </div>
     <div style="font-size:10px;color:var(--text2);line-height:1.5;margin-bottom:8px;padding:8px 10px;background:var(--bg2);border-radius:6px;border-left:2px solid var(--copper)">
-      <strong>Nota metodológica (BdP, Jun 2026):</strong> Estimativas de agregados obtidas dividindo a população pela dimensão média do agregado familiar interpolada entre Censos (2001: 2,80 / 2011: 2,60 / 2021: 2,50). A partir de 2021, dimensão média mantida constante. O BdP estima um défice acumulado de ~300 mil fogos na última década, com base em estimativas populacionais próprias que incorporam fluxos migratórios via Segurança Social. O défice terá sido anulado em 2025.
+      <strong>Nota metodológica (BdP, Jun 2026):</strong> Estimativas de agregados obtidas dividindo a população pela dimensão média do agregado familiar interpolada entre Censos (2001: 2,80 / 2011: 2,60 / 2021: 2,50). A partir de 2021, dimensão média mantida constante. O BdP (Boletim Económico Jun 2026) estima um défice acumulado de ~300 mil fogos na última década, com base em estimativas populacionais próprias via Segurança Social. Em 2025 registou-se um excedente de +316 fogos — défice anulado. Dados: variação de agregados 2025 = 26.398 · fogos concluídos 2025 = 26.714.
     </div>
     <div style="position:relative;width:100%;height:240px"><canvas id="cAgregados"></canvas></div>
   </div>
@@ -702,7 +702,7 @@ function initCharts(ind, eurVal) {
     datasets:[
       {label:'Pré-certificados',data:[null,null,null,null,null,null,null,null,11221,15744,20994,30887,37671,33672,31362,null,41888,53272,60784],backgroundColor:'rgba(184,115,51,0.65)',borderWidth:0},
       {label:'Licenciados',data:[65828,45981,27298,25002,17615,11512,7494,6996,8686,11817,14967,21896,25824,26168,29827,null,32519,34637,41870],backgroundColor:'rgba(55,138,221,0.65)',borderWidth:0},
-      {label:'Concluídos',data:[null,null,null,null,null,null,null,null,2535,3927,6027,8991,11847,7504,1535,null,9369,18635,18914],backgroundColor:'rgba(29,158,117,0.65)',borderWidth:0}
+      {label:'Concluídos',data:[null,null,null,null,null,null,null,null,2535,3927,6027,8991,11847,7504,1535,null,9369,25311,26714],backgroundColor:'rgba(29,158,117,0.65)',borderWidth:0}
     ]},
     options:{...D,plugins:{...D.plugins,legend:{display:true,labels:{font:{size:11},color:'var(--text2)'}}},scales:{...D.scales,x:{...D.scales.x,ticks:{...D.scales.x.ticks,autoSkip:false}},y:{...D.scales.y,ticks:{callback:v=>v.toLocaleString('pt-PT'),font:{size:10},color:'var(--text2)'}}}}
   });
@@ -714,10 +714,10 @@ function initCharts(ind, eurVal) {
       labels:['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'],
       datasets:[
         {label:'Fogos concluídos (INE)',
-         data:[12000,14000,16000,19000,14000,18000,21000,23100,25300,26700],
+         data:[7909,8213,10751,12954,16923,19754,20772,23085,25311,26714],
          backgroundColor:'rgba(55,138,221,0.65)',borderWidth:0,order:2},
         {label:'Variação de agregados (estimativa)',
-         data:[6442,12543,15185,32834,23934,27293,38201,49242,43964,25000],
+         data:[13796,26337,41187,66694,44053,23241,86323,91430,62328,26398],
          type:'line',borderColor:'#d85a30',backgroundColor:'rgba(216,90,48,0.1)',
          tension:0.3,pointRadius:4,borderWidth:2,fill:false,order:1}
       ]
