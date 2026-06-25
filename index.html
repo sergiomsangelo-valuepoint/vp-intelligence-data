@@ -140,7 +140,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); padd
   <div class="grid">
     <div class="card"><div class="card-lbl">PIB real</div><div class="card-val"><span id="v-pib">—</span><span class="card-unit">%</span></div><div class="card-delta" id="d-pib"></div></div>
     <div class="card"><div class="card-lbl">Inflação IPC</div><div class="card-val"><span id="v-hicp">—</span><span class="card-unit">%</span></div><div class="card-delta" id="d-hicp"></div></div>
-    <div class="card"><div class="card-lbl">Imigração líquida</div><div class="card-val">97 119<span class="card-unit">pessoas</span></div><div class="card-delta">2024 · INE/Pordata</div></div>
+    <div class="card"><div class="card-lbl">Imigração líquida</div><div class="card-val">70 862<span class="card-unit">pessoas</span></div><div class="card-delta">2025 · INE EPR</div></div>
   </div>
 </div>
 
@@ -353,11 +353,11 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); padd
     <div class="card"><div class="card-lbl">PIB real var. hom.</div><div class="card-val"><span id="mac-pib">—</span><span class="card-unit">%</span></div><div class="card-delta" id="macd-pib"></div></div>
     <div class="card"><div class="card-lbl">Inflação IPC</div><div class="card-val"><span id="mac-ipc">—</span><span class="card-unit">%</span></div><div class="card-delta" id="macd-ipc"></div></div>
     <div class="card"><div class="card-lbl">Rendimento líquido</div><div class="card-val"><span id="mac-rend">—</span><span class="card-unit">€/mês</span></div><div class="card-delta" id="macd-rend"></div></div>
-    <div class="card"><div class="card-lbl">Imigração líquida</div><div class="card-val">97 119<span class="card-unit">pessoas</span></div><div class="card-delta">2024 · INE/Pordata</div></div>
+    <div class="card"><div class="card-lbl">Imigração líquida</div><div class="card-val">70 862<span class="card-unit">pessoas</span></div><div class="card-delta">2025 · INE EPR</div></div>
   </div>
   <div class="cc">
     <div class="cc-title">Inflação IPC — variação homóloga mensal</div>
-    <div class="cc-sub">Portugal · % · INE/Eurostat Jan 2019 – Abr 2026</div>
+    <div class="cc-sub">Portugal · % · INE/Eurostat Jan 2019 – Mai 2026</div>
     <div style="position:relative;width:100%;height:200px"><canvas id="cIPC"></canvas></div>
   </div>
   <div class="cc">
@@ -366,10 +366,26 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); padd
     <div style="position:relative;width:100%;height:180px"><canvas id="cPIB"></canvas></div>
   </div>
   <div class="cc">
-    <div class="cc-title">Imigração líquida — série anual</div>
-    <div class="cc-sub">Portugal · N.º pessoas · INE/Pordata 2013–2024</div>
+    <div class="cc-title">Saldo migratório — série anual</div>
+    <div class="cc-sub">Portugal · N.º pessoas · INE, Estimativas Anuais de População Residente 2013–2025</div>
+    <div style="font-size:10px;color:var(--text2);line-height:1.5;margin-bottom:8px;padding:8px 10px;background:var(--bg2);border-radius:6px;border-left:2px solid var(--copper)">
+      <strong>Nota metodológica INE:</strong> A partir de 2021, as Estimativas Anuais de População Residente são de base administrativa. Até 2020, são definitivas e assentes nos recenseamentos anteriores. A leitura da evolução de 2020 para 2021 deve ter presente esta alteração metodológica.
+    </div>
     <div style="position:relative;width:100%;height:180px"><canvas id="cImig"></canvas></div>
   </div>
+  <div class="cc" style="margin-top:12px">
+    <div class="cc-title">Produção de habitação nova vs variação de agregados familiares</div>
+    <div class="cc-sub">Portugal · N.º fogos anuais · INE/BdP, Boletim Económico Junho 2026</div>
+    <div class="cc-legend">
+      <span><span class="ld" style="background:var(--blue)"></span>Fogos concluídos (INE)</span>
+      <span><span class="ld" style="background:var(--coral)"></span>Variação de agregados (INE EPR / estimativa)</span>
+    </div>
+    <div style="font-size:10px;color:var(--text2);line-height:1.5;margin-bottom:8px;padding:8px 10px;background:var(--bg2);border-radius:6px;border-left:2px solid var(--copper)">
+      <strong>Nota metodológica (BdP, Jun 2026):</strong> Estimativas de agregados obtidas dividindo a população pela dimensão média do agregado familiar interpolada entre Censos (2001: 2,80 / 2011: 2,60 / 2021: 2,50). A partir de 2021, dimensão média mantida constante. O BdP estima um défice acumulado de ~300 mil fogos na última década, com base em estimativas populacionais próprias que incorporam fluxos migratórios via Segurança Social. O défice terá sido anulado em 2025.
+    </div>
+    <div style="position:relative;width:100%;height:240px"><canvas id="cAgregados"></canvas></div>
+  </div>
+
 </div>
 
 <!-- CALENDÁRIO -->
@@ -594,15 +610,15 @@ function initCharts(ind, eurVal) {
 
   // Transacções
   new Chart(document.getElementById('cTrans'),{type:'bar',
-    data:{labels:['Q1 19','Q2 19','Q3 19','Q4 19','Q1 20','Q2 20','Q3 20','Q4 20','Q1 21','Q2 21','Q3 21','Q4 21','Q1 22','Q2 22','Q3 22','Q4 22','Q1 23','Q2 23','Q3 23','Q4 23','Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25'],
-    datasets:[{label:'Transacções',data:[36954,36681,39554,41676,36399,26379,35596,39139,34614,41736,43447,45885,43544,43607,42223,38614,37852,40123,41560,42890,43447,45885,43544,43607,42223,42223,42223,43084],backgroundColor:'rgba(55,138,221,0.5)',borderColor:'#378add',borderWidth:0.5}]},
+    data:{labels:['Q1 19','Q2 19','Q3 19','Q4 19','Q1 20','Q2 20','Q3 20','Q4 20','Q1 21','Q2 21','Q3 21','Q4 21','Q1 22','Q2 22','Q3 22','Q4 22','Q1 23','Q2 23','Q3 23','Q4 23','Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25','Q1 26'],
+    datasets:[{label:'Transacções',data:[36954,36681,39554,41676,36399,26379,35596,39139,34614,41736,43447,45885,43544,43607,42223,38614,37852,40123,41560,42890,43447,45885,43544,43607,42223,42223,42223,43084,37745],backgroundColor:'rgba(55,138,221,0.5)',borderColor:'#378add',borderWidth:0.5}]},
     options:{...D,scales:{...D.scales,x:xt(8),y:{...D.scales.y,ticks:{callback:v=>v.toLocaleString('pt-PT'),font:{size:10},color:'var(--text2)'}}}}
   });
 
   // IPH
   new Chart(document.getElementById('cIPH'),{type:'line',
-    data:{labels:['Q1 19','Q2 19','Q3 19','Q4 19','Q1 20','Q2 20','Q3 20','Q4 20','Q1 21','Q2 21','Q3 21','Q4 21','Q1 22','Q2 22','Q3 22','Q4 22','Q1 23','Q2 23','Q3 23','Q4 23','Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25'],
-    datasets:[{label:'IPH var. homóloga (%)',data:[9.2,9.2,9.5,9.8,9.5,10.2,10.8,10.5,10.4,10.6,10.8,10.6,9.7,9.8,9.7,6.9,8.1,8.0,7.8,8.2,11.5,11.6,12.9,13.2,13.2,13.2,13.1,18.9],borderColor:'#b87333',backgroundColor:'rgba(184,115,51,0.07)',tension:0.4,fill:true,pointRadius:2,borderWidth:2}]},
+    data:{labels:['Q1 19','Q2 19','Q3 19','Q4 19','Q1 20','Q2 20','Q3 20','Q4 20','Q1 21','Q2 21','Q3 21','Q4 21','Q1 22','Q2 22','Q3 22','Q4 22','Q1 23','Q2 23','Q3 23','Q4 23','Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25','Q1 26'],
+    datasets:[{label:'IPH var. homóloga (%)',data:[9.2,9.2,9.5,9.8,9.5,10.2,10.8,10.5,10.4,10.6,10.8,10.6,9.7,9.8,9.7,6.9,8.1,8.0,7.8,8.2,11.5,11.6,12.9,13.2,13.2,13.2,13.1,18.9,17.8],borderColor:'#b87333',backgroundColor:'rgba(184,115,51,0.07)',tension:0.4,fill:true,pointRadius:2,borderWidth:2}]},
     options:{...D,scales:{...D.scales,x:xt(8),y:{...D.scales.y,ticks:{callback:v=>v+'%',font:{size:10},color:'var(--text2)'}}}}
   });
 
@@ -615,7 +631,7 @@ function initCharts(ind, eurVal) {
     'Jan 23','Fev 23','Mar 23','Abr 23','Mai 23','Jun 23','Jul 23','Ago 23','Set 23','Out 23','Nov 23','Dez 23',
     'Jan 24','Fev 24','Mar 24','Abr 24','Mai 24','Jun 24','Jul 24','Ago 24','Set 24','Out 24','Nov 24','Dez 24',
     'Jan 25','Fev 25','Mar 25','Abr 25','Mai 25','Jun 25','Jul 25','Ago 25','Set 25','Out 25','Nov 25','Dez 25',
-    'Jan 26','Fev 26','Mar 26','Abr 26'
+    'Jan 26','Fev 26','Mar 26','Abr 26','Mai 26'
   ];
   const ipcData = [
     0.48,0.94,0.85,0.77,0.42,0.39,-0.32,-0.09,-0.11,0.02,0.32,0.42,
@@ -625,7 +641,7 @@ function initCharts(ind, eurVal) {
     8.70,7.90,7.10,6.30,4.70,3.80,3.40,3.20,3.10,2.90,2.70,2.50,
     2.60,2.40,2.20,2.10,2.30,2.10,2.00,1.90,2.10,2.00,1.80,1.70,
     1.90,1.80,2.00,1.90,2.10,2.00,1.90,1.80,2.00,1.90,1.70,1.60,
-    2.10,2.00,2.20,3.35
+    2.10,2.00,2.20,3.35,3.27
   ];
   new Chart(document.getElementById('cIPC'),{type:'line',
     data:{labels:ipcLabels,
@@ -643,7 +659,7 @@ function initCharts(ind, eurVal) {
   new Chart(document.getElementById('cPIB'),{type:'bar',
     data:{labels:['Q1 19','Q2 19','Q3 19','Q4 19','Q1 20','Q2 20','Q3 20','Q4 20','Q1 21','Q2 21','Q3 21','Q4 21','Q1 22','Q2 22','Q3 22','Q4 22','Q1 23','Q2 23','Q3 23','Q4 23','Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25','Q1 26'],
     datasets:[{label:'PIB real var. hom. (%)',
-      data:[2.5,2.6,2.7,2.8,-2.4,-17.6,-6.1,-5.4,4.5,16.5,12.1,7.5,7.2,6.9,5.0,6.1,2.8,2.5,2.0,2.2,1.7,1.8,2.0,2.3,2.5,2.8,3.0,3.2,2.3],
+      data:[2.5,2.6,2.7,2.8,-2.4,-17.6,-6.1,-5.4,4.5,16.5,12.1,7.5,7.2,6.9,5.0,6.1,2.8,2.5,2.0,2.2,1.7,1.8,2.0,2.3,1.6,1.7,2.2,1.9,2.3],
       backgroundColor: ctx => ctx.raw>=0?'rgba(29,158,117,0.6)':'rgba(216,90,48,0.6)',
       borderWidth:0}]},
     options:{...D,scales:{...D.scales,x:xt(10),y:{...D.scales.y,ticks:{callback:v=>v+'%',font:{size:10},color:'var(--text2)'}}}}
@@ -692,13 +708,45 @@ function initCharts(ind, eurVal) {
   });
 
   // Imigração líquida
+  // Fogos concluídos vs variação de agregados
+  new Chart(document.getElementById('cAgregados'),{type:'bar',
+    data:{
+      labels:['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'],
+      datasets:[
+        {label:'Fogos concluídos (INE)',
+         data:[12000,14000,16000,19000,14000,18000,21000,23100,25300,26700],
+         backgroundColor:'rgba(55,138,221,0.65)',borderWidth:0,order:2},
+        {label:'Variação de agregados (estimativa)',
+         data:[6442,12543,15185,32834,23934,27293,38201,49242,43964,null],
+         type:'line',borderColor:'#d85a30',backgroundColor:'rgba(216,90,48,0.1)',
+         tension:0.3,pointRadius:4,borderWidth:2,fill:false,order:1}
+      ]
+    },
+    options:{...D,
+      plugins:{...D.plugins,
+        legend:{display:true,labels:{font:{size:11},color:'var(--text2)'}},
+        tooltip:{mode:'index',intersect:false,callbacks:{
+          title:i=>i[0]?.label,
+          label:i=>` ${i.dataset.label}: ${i.raw!==null?parseInt(i.raw).toLocaleString('pt-PT'):'n.d.'}`
+        }}
+      },
+      scales:{...D.scales,
+        x:{...D.scales.x},
+        y:{...D.scales.y,ticks:{callback:v=>v.toLocaleString('pt-PT'),font:{size:10},color:'var(--text2)'}}
+      }
+    }
+  });
+
   new Chart(document.getElementById('cImig'),{type:'bar',
-    data:{labels:['2013','2014','2015','2016','2017','2018','2019','2020','2021','2022','2023','2024'],
-    datasets:[{label:'Imigração líquida (pessoas)',
-      data:[-36024,-30294,-10044,2873,12556,18993,28504,25604,40671,72562,87495,97119],
+    data:{labels:['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'],
+    datasets:[{label:'Saldo migratório (pessoas)',
+      data:[-3528,-629,14896,23757,67163,57768,250079,371277,307288,216629,70862],
       backgroundColor: ctx=>ctx.raw>=0?'rgba(55,138,221,0.6)':'rgba(216,90,48,0.6)',
       borderWidth:0}]},
-    options:{...D,scales:{...D.scales,y:{...D.scales.y,ticks:{callback:v=>v.toLocaleString('pt-PT'),font:{size:10},color:'var(--text2)'}}}}
+    options:{...D,plugins:{...D.plugins,tooltip:{mode:'index',intersect:false,callbacks:{
+      title:i=>i[0]?.label,
+      label:i=>` Saldo migratório: ${parseInt(i.raw).toLocaleString('pt-PT')} pessoas`
+    }}},scales:{...D.scales,y:{...D.scales.y,ticks:{callback:v=>v.toLocaleString('pt-PT'),font:{size:10},color:'var(--text2)'}}}}
   });
 }
 
