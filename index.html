@@ -297,7 +297,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); padd
   </div>
   <div class="cc">
     <div class="cc-title">Renda mediana novos contratos — série trimestral</div>
-    <div class="cc-sub">Portugal · €/m²/mês · INE 2021–2025</div>
+    <div class="cc-sub">Portugal · €/m²/mês · INE 2021–Q1 2026</div>
     <div style="position:relative;width:100%;height:180px"><canvas id="cRenda"></canvas></div>
   </div>
   <div class="cc">
@@ -596,8 +596,8 @@ function initCharts(ind, eurVal) {
 
   // Renda mediana
   new Chart(document.getElementById('cRenda'),{type:'line',
-    data:{labels:['Q1 21','Q2 21','Q3 21','Q4 21','Q1 22','Q2 22','Q3 22','Q4 22','Q1 23','Q2 23','Q3 23','Q4 23','Q1 24','Q2 24','Q3 24','Q4 24','Q1 25'],
-    datasets:[{label:'Renda mediana (€/m²/mês)',data:[5.56,5.75,5.91,6.08,6.31,6.55,6.82,7.09,7.22,7.38,7.52,7.71,7.88,8.02,8.15,8.19,8.22],borderColor:'#b87333',backgroundColor:'rgba(184,115,51,0.07)',tension:0.4,fill:true,pointRadius:2,borderWidth:2}]},
+    data:{labels:['Q1 21','Q2 21','Q3 21','Q4 21','Q1 22','Q2 22','Q3 22','Q4 22','Q1 23','Q2 23','Q3 23','Q4 23','Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25','Q1 26'],
+    datasets:[{label:'Renda mediana (€/m²/mês)',data:[5.56,5.75,5.91,6.08,6.31,6.55,6.82,7.09,7.22,7.38,7.52,7.71,7.88,8.02,8.15,8.19,8.22,8.67,9.23,9.78,9.46],borderColor:'#b87333',backgroundColor:'rgba(184,115,51,0.07)',tension:0.4,fill:true,pointRadius:2,borderWidth:2}]},
     options:{...D,scales:{...D.scales,y:{...D.scales.y,ticks:{callback:v=>v.toFixed(2)+' €',font:{size:10},color:'var(--text2)'}}}}
   });
 
